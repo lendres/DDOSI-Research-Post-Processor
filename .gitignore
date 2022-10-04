@@ -16,11 +16,11 @@
 *.dylib
 *.dll
 
-# Fortran module files
+# Fortran Module Files
 *.mod
 *.smod
 
-# Compiled Static libraries
+# Compiled Static Libraries
 *.lai
 *.la
 *.a
@@ -30,3 +30,22 @@
 *.exe
 *.out
 *.app
+
+# Intermediate and Output Directories
+bin/
+obj/
+
+# User Project Files
+*.user
+
+# IDE Directories
+.vs/
+
+# Individual Files
+src/signalsegmentation/Test Data/C Sharp Output.txt
+src/signalsegmentation/Test Data/C Output.txt
+
+# Python
+src/python/Lib/
+src/python/Scripts/
+src/python/pyvenv.cfg

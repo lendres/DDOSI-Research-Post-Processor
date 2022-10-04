@@ -1,0 +1,27 @@
+This library implements the algorithm found in:
+"Segmentation of well logs by maximum likelihood estimation: the algorithm and FORTRAN-77 implementation" by S.Radhakrishnan, G.Srikanth, and C.H.Mehta
+https://www.sciencedirect.com/science/article/pii/0098300491900237
+
+The original algorithm was written in Fortran.  This version converts it to C++ and C#.  In addition, the following changes have been made:
+	- Removed a bug from the GETSPK/GetSpikeyZone function.
+	- Added the ability to filter returned segments to remove short/small segments.
+
+CPP Static Library
+	SegmentSignalFunctions.*
+		These files implement the orginal algorithm in C++.  The function names have changed to something more readable.  The original function names can be found in the comments in
+		the .cpp file.  The functions have otherwise been largely straight converted from Fortran and should be easily comparable to the source paper.
+	SegmentSignal.*
+		A class interface to the functions that makes use of the algorithm easier.
+	SegmentationResults.*
+		Small class to return results of the algorithm.
+	NoiseVarianceEstimateMethod.h
+		Enumeration for the noise variance estimation method.
+
+CPP DLL
+	DLL wrapper around the main SegmentSignal function.
+
+C Sharp DLL Wrapper
+	C# interface to the DLL.  Classes mirror those in C++.
+
+* Unit Tests
+	Testing projects.
