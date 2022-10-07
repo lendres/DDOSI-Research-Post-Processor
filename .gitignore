@@ -1,2 +1,7 @@
 # Project Files
 .spyproject
+
+
+# Output Folders
+build/
+*.egg-info/
