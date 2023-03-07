@@ -6,6 +6,8 @@ import numpy                                     as np
 import pandas                                    as pd
 import matplotlib.pyplot                         as plt
 
+from itertools                                   import chain
+
 from   ddosi.signalprocessing.NoiseVarianceEstimateMethod                      import NoiseVarianceEstimateMethod
 
 from   SegmentSignalPy                           import Segment                as SegmentC
@@ -18,7 +20,25 @@ class SegmentSignal():
     results                     = None
     significantZonesIndices     = None
     significantZoneValues       = None
+    xData                       = None
 
+    def __init__(self, xData=None):
+        """
+        Contructor.
+
+        Parameters
+        ----------
+        dataFrame: Pandas DataFrame
+        xData : array like or string
+            The x-axis data.  Not required to segment, but is required for a lot of plotting and post processing.
+            If "dataFrame" is provided, "xData" can be a string that is the column name of the x-axis data in the
+            DataFrame.
+
+        Returns
+        -------
+        None.
+        """
+        self.xData = xData
 
     def Segment(
             self,
@@ -88,12 +108,15 @@ class SegmentSignal():
         return results
 
 
-    def FindSignificantZones(self, xData, threshold, includeBoundaries=False):
+    def FindSignificantZones(self, threshold, includeBoundaries=False):
         if self.results is None:
             raise Exception("There are no results.  You must first run \"Segment\".")
 
-        self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, xData, threshold, includeBoundaries)
-        self.significantZoneValues   = [[xData[pointSet[0]], xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
+        if self.xData is None:
+            raise Exception("The x-axis data was not set.")
+
+        self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, self.xData, threshold, includeBoundaries)
+        self.significantZoneValues   = [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
 
 
     @property
@@ -101,15 +124,21 @@ class SegmentSignal():
         return len(self.significantZonesIndices)
 
 
-    def PlotFileteredSignal(self, axis, xData, **kwargs):
-        axis.plot(xData, self.results.FilteredSignal, color="cyan", label="Filtered Signal", **kwargs)
+    def PlotFileteredSignal(self, axis, **kwargs):
+        if self.xData is None:
+            raise Exception("The x-axis data was not set.")
+
+        axis.plot(self.xData, self.results.FilteredSignal, color="cyan", label="Filtered Signal", **kwargs)
 
 
-    def PlotSegmentedSignal(self, axis, xData, **kwargs):
-        axis.plot(xData, self.results.SegmentedLog, color="red", label="Segmented Signal", **kwargs)
+    def PlotSegmentedSignal(self, axis, **kwargs):
+        if self.xData is None:
+            raise Exception("The x-axis data was not set.")
+
+        axis.plot(self.xData, self.results.SegmentedLog, color="red", label="Segmented Signal", **kwargs)
 
 
-    def PlotBinaryEvents(self, axis, xData, **kwargs):
+    def PlotBinaryEvents(self, axis, **kwargs):
         yData = PlotHelper.GetYBoundaries(axis)
 
         label="Segment Boundry"
@@ -119,22 +148,23 @@ class SegmentSignal():
                 #"mediumvioletred"
                 kwargs.setdefault("linewidth", 0.5)
                 kwargs.setdefault("color", "orchid")
-                axis.plot([xData[i], xData[i]], yData, **kwargs, label=label)
+                axis.plot([self.xData[i], self.xData[i]], yData, **kwargs, label=label)
                 label = None
 
 
-    def PlotSignificantZones(self, axis, xData, threshold, includeBoundaries=False, **kwargs):
-        self.FindSignificantZones(xData, threshold, includeBoundaries)
+    def PlotSignificantZones(self, axis, threshold, includeBoundaries=False, **kwargs):
+        # Find signifcant zones will raise the exception if there isn't any x-axis data, so no need to do it here.
+        self.FindSignificantZones(threshold, includeBoundaries)
 
         yData = PlotHelper.GetYBoundaries(axis)
 
         yBottom = [yData[0], yData[0]]
-        yTop = [yData[1], yData[1]]
+        yTop    = [yData[1], yData[1]]
 
         label = "Zone"
         for zone, i in zip(self.significantZoneValues, range(self.NumberOfSignificantZones)):
             plt.fill_between(zone, yTop, yBottom, color="blue", alpha=0.15, label=label)
-            annotation = axis.annotate(
+            axis.annotate(
                 i,
                 xy=(np.average(zone), yTop[0]),                                # Point to annotate (top center of fill).
                 xytext=(0, -3),                                                # Move text down a few points.
@@ -144,5 +174,32 @@ class SegmentSignal():
                 horizontalalignment="center",                                  # Center text horizontally.
                 verticalalignment="top"                                        # Justify to top of text.
             )
-            #annotation.
             label = None
+
+
+    def DropDataByZoneRange(self, data, startZone, endZone, keep=False):
+        startIndex = (self.significantZonesIndices[startZone])[0]
+        endIndex   = (self.significantZonesIndices[endZone])[1]
+
+        if keep:
+            dropIndices = chain(range(0, startIndex-1), range(endIndex+1, data.shape[0]))
+        else:
+            dropIndices = range(startIndex, endIndex)
+
+        #self._DropResults(dropIndices)
+        #self.significantZonesIndices
+        #self.significantZoneValues
+        return data.drop(dropIndices, inplace=False).reset_index()
+
+
+    def _DropResutls(self, dropIndices):
+        self.results.SignalLength
+        self.results.BinaryEventSequence
+        self.results.NumberOfBinaryEvents
+        self.results.FilteredSignal
+        self.results.SegmentedLog
+        self.results.NoiseVariance
+        self.results.JumpSequenceVariance
+        self.results.SegmentDensity
+        self.results.Iterations
+        self.results.Error
