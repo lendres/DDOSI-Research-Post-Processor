@@ -152,7 +152,7 @@ class SegmentSignal():
                 label = None
 
 
-    def PlotSignificantZones(self, axis, threshold, includeBoundaries=False, **kwargs):
+    def PlotSignificantZones(self, axis, threshold, legendPrefix="", includeBoundaries=False, **kwargs):
         # Find signifcant zones will raise the exception if there isn't any x-axis data, so no need to do it here.
         self.FindSignificantZones(threshold, includeBoundaries)
 
@@ -161,7 +161,7 @@ class SegmentSignal():
         yBottom = [yData[0], yData[0]]
         yTop    = [yData[1], yData[1]]
 
-        label = "Zone"
+        label = legendPrefix+" "+"Zone" if legendPrefix!="" else "Zone"
         for zone, i in zip(self.significantZoneValues, range(self.NumberOfSignificantZones)):
             plt.fill_between(zone, yTop, yBottom, color="blue", alpha=0.15, label=label)
             axis.annotate(
@@ -177,29 +177,50 @@ class SegmentSignal():
             label = None
 
 
-    def DropDataByZoneRange(self, data, startZone, endZone, keep=False):
+    def DropDataByZoneRange(self, data, xData, startZone, endZone, keep=False):
+        # Indices in the DataFrame.
         startIndex = (self.significantZonesIndices[startZone])[0]
         endIndex   = (self.significantZonesIndices[endZone])[1]
 
         if keep:
-            dropIndices = chain(range(0, startIndex-1), range(endIndex+1, data.shape[0]))
+            dropIndices = list(chain(range(0, startIndex-1), range(endIndex+1, data.shape[0])))
+            dropZones   = list(chain(range(0, startZone-1),  range(endZone+1, len(self.significantZoneValues)-1)))
         else:
-            dropIndices = range(startIndex, endIndex)
+            dropIndices = list(range(startIndex, endIndex))
+            dropZones   = list(range(startZone, endZone))
 
-        #self._DropResults(dropIndices)
-        #self.significantZonesIndices
-        #self.significantZoneValues
-        return data.drop(dropIndices, inplace=False).reset_index()
+        self._DropResults(dropIndices)
+        self.significantZonesIndices = np.delete(self.significantZonesIndices, dropZones)
+        self.significantZoneValues   = np.delete(self.significantZoneValues, dropZones)
+
+        # Generate new data as a subset of the old.
+        dataSubset = data.drop(dropIndices, inplace=False).reset_index()
+
+        # Update the x-axis data.  This must be done after the data has been updated to make sure we get the new, reduced data.
+        if type(xData) == str:
+            self.xData = dataSubset[xData]
+        elif type(xData) is np.ndarray:
+            self.xData = np.delete(xData, dropIndices)
+        elif type(xData) == pd.core.series.Series:
+            self.xData = xData.drop(dropIndices, inplace=False).reset_index()
+
+        return dataSubset
 
 
-    def _DropResutls(self, dropIndices):
-        self.results.SignalLength
-        self.results.BinaryEventSequence
-        self.results.NumberOfBinaryEvents
-        self.results.FilteredSignal
-        self.results.SegmentedLog
-        self.results.NoiseVariance
-        self.results.JumpSequenceVariance
-        self.results.SegmentDensity
-        self.results.Iterations
-        self.results.Error
+    def _DropResults(self, dropIndices):
+        binaryEventSequence = np.delete(self.results.BinaryEventSequence, dropIndices)
+
+        self.results = SegmentationResults(
+            len(binaryEventSequence),
+            binaryEventSequence,
+            sum(binaryEventSequence),
+            np.delete(self.results.FilteredSignal, dropIndices),
+            np.delete(self.results.SegmentedLog, dropIndices),
+            np.delete(self.results.NoiseVariance, dropIndices),
+            self.results.JumpSequenceVariance,
+            self.results.SegmentDensity,
+            self.results.Iterations,
+            self.results.Error
+        )
+
+        print(len(binaryEventSequence))
