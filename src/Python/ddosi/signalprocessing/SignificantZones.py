@@ -46,6 +46,10 @@ class SignificantZones():
             raise Exception("The x-axis data was not set.")
 
         self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, self.xData, threshold, includeBoundaries)
+        self._CalculateZoneValues()
+
+
+    def _CalculateZoneValues(self):
         self.significantZoneValues   = [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
 
 
@@ -54,9 +58,9 @@ class SignificantZones():
         return len(self.significantZonesIndices)
 
 
-    def PlotSignificantZones(self, axis, threshold, legendPrefix="", includeBoundaries=False, **kwargs):
-        # Find signifcant zones will raise the exception if there isn't any x-axis data, so no need to do it here.
-        self.FindSignificantZones(threshold, includeBoundaries)
+    def PlotSignificantZones(self, axis, legendPrefix="", **kwargs):
+        if self.significantZonesIndices is None:
+            raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
 
         yData = PlotHelper.GetYBoundaries(axis)
 
@@ -112,6 +116,17 @@ class SignificantZones():
         return dataSubset
 
 
+    def IgnoreZones(self, zones):
+        newIndices = []
+        newValues  = []
+        for i in range(0, len(self.significantZonesIndices)):
+            if not i in zones:
+                newIndices.append(self.significantZonesIndices[i])
+                newValues.append(self.significantZoneValues[i])
+        self.significantZonesIndices = newIndices
+        self.significantZoneValues   = newValues
+
+
     def _DropResults(self, dropIndices):
         binaryEventSequence = np.delete(self.results.BinaryEventSequence, dropIndices)
 
@@ -128,16 +143,35 @@ class SignificantZones():
             self.results.Error
         )
 
-    @classmethod
-    def UnionSignificantZones(cls, firstSignificantZones, secondSignificantZones):
-        allZones = firstSignificantZones.significantZonesIndices.append(secondSignificantZones.significantZonesIndices)
-        print(allZones)
-        b = []
-        for begin, end in sorted(allZones):
-            if b and b[-1][1] >= begin - 1:
-                b[-1][1] = max(b[-1][1], end)
-            else:
-                b.append([begin, end])
 
-        print(b)
-        return b
+    def UnionSignificantZones(self, secondSignificantZones):
+        allZones = [list(zone) for zone in self.significantZonesIndices]
+        for zone in secondSignificantZones.significantZonesIndices:
+            allZones.append(list(zone))
+        print("\nAll zones", allZones)
+        unions = []
+        for begin, end in sorted(allZones):
+            if unions and unions[-1][1] >= begin - 1:
+                unions[-1][1] = max(unions[-1][1], end)
+            else:
+                unions.append([begin, end])
+
+        newSignificantZones = SignificantZones(self.results, self.xData)
+        newSignificantZones.significantZonesIndices = unions
+        newSignificantZones._CalculateZoneValues()
+        return newSignificantZones
+
+
+    def IntersectionSignificantZones(self, otherSignificantZones):
+        print()
+        intersections = []
+        for zone in self.significantZonesIndices:
+            for otherZone in otherSignificantZones.significantZonesIndices:
+                largestMin = max(zone[0], otherZone[0])
+                smallestMax = min(zone[1], otherZone[1])
+                if smallestMax > largestMin:
+                    intersections.append([largestMin, smallestMax])
+        newSignificantZones = SignificantZones(self.results, self.xData)
+        newSignificantZones.significantZonesIndices = intersections
+        newSignificantZones._CalculateZoneValues()
+        return newSignificantZones
