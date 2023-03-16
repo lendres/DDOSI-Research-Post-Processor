@@ -9,8 +9,8 @@ class Plots():
 
 
     @classmethod
-    def CreateWobAndRpmPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", rpmColumn="RPM", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.PlotOnTwoAxes(data, xAxisColumn, [wobColumn], [rpmColumn], **kwargs)
+    def NewWobAndRpmPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", rpmColumn="RPM", **kwargs):
+        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [rpmColumn], **kwargs)
 
         # Labels.
         PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
@@ -20,8 +20,8 @@ class Plots():
 
 
     @classmethod
-    def CreateWobAndTobPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", tobColumn="TOB", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.PlotOnTwoAxes(data, xAxisColumn, [wobColumn], [tobColumn], **kwargs)
+    def NewWobAndTobPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", tobColumn="TOB", **kwargs):
+        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [tobColumn], **kwargs)
 
         # Labels.
         PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
@@ -31,8 +31,8 @@ class Plots():
 
 
     @classmethod
-    def CreateWobAndRopPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", ropColumn="ROP", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.PlotOnTwoAxes(data, xAxisColumn, [wobColumn], [ropColumn], **kwargs)
+    def NewWobAndRopPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", ropColumn="ROP", **kwargs):
+        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [ropColumn], **kwargs)
 
         # Labels.
         PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
@@ -42,7 +42,7 @@ class Plots():
 
 
     @classmethod
-    def CreateRopWobAndRpmPlot(cls, title, data, xAxisColumn="Time", ropColumn="ROP", wobColumn="WOB", rpmColumn="TOB", **kwargs):
+    def NewRopWobAndRpmPlot(cls, title, data, xAxisColumn="Time", ropColumn="ROP", wobColumn="WOB", rpmColumn="TOB", **kwargs):
         figure, (leftAxis, rightAxis) = PlotMaker.CreateThreeAxisPlot(data, xAxisColumn, [ropColumn], [wobColumn, rpmColumn], **kwargs)
 
         # Labels.
@@ -53,8 +53,8 @@ class Plots():
 
 
     @classmethod
-    def CreateWobAndDepthOfCutPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", depthOfCutColumn="Depth of Cut", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.PlotOnTwoAxes(data, xAxisColumn, [wobColumn], [depthOfCutColumn], **kwargs)
+    def NewWobAndDepthOfCutPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", depthOfCutColumn="Depth of Cut", **kwargs):
+        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [depthOfCutColumn], **kwargs)
 
         # Labels.
         PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
