@@ -55,10 +55,16 @@ class SignificantZones():
 
     @property
     def NumberOfSignificantZones(self):
+        """
+        Returns
+        -------
+        int
+            The number of significant zones.
+        """
         return len(self.significantZonesIndices)
 
 
-    def PlotSignificantZones(self, axis, legendPrefix="", **kwargs):
+    def PlotSignificantZones(self, axis, legendPrefix=""):
         if self.significantZonesIndices is None:
             raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
 
@@ -117,14 +123,56 @@ class SignificantZones():
 
 
     def IgnoreZones(self, zones):
+        """
+        Specifies zones to ignore (remove from set of significant zones.)  This does not alter the data in any way, it just removes
+        the zone information.  This is a manual way of specifying that the zone is not signficant.
+
+        Parameters
+        ----------
+        zones : list of ints
+            The numbers (indices) of the zones to ignore.
+
+        Returns
+        -------
+        None.
+        """
         newIndices = []
         newValues  = []
+
+        # Loop through the zones and copy all values expcept those specified in the input.
         for i in range(0, len(self.significantZonesIndices)):
             if not i in zones:
                 newIndices.append(self.significantZonesIndices[i])
                 newValues.append(self.significantZoneValues[i])
+
+        # Update the class's indices and values.
         self.significantZonesIndices = newIndices
         self.significantZoneValues   = newValues
+
+
+    def MergeZones(self, zones):
+        if len(zones) < 1:
+            return
+
+        newIndices = []
+        startZone  = zones[0]
+        i = 0
+        while i < len(self.significantZonesIndices):
+            print(i)
+            if i == startZone:
+                # Get the start index of the merged zones.
+                startIndex = (self.significantZonesIndices[i])[0]
+
+                # Use the end zone to get the end index.
+                endZone = zones[1]
+                endIndex   = (self.significantZonesIndices[endZone])[1]
+                newIndices.append([startIndex, endIndex])
+                i = endZone + 1
+            else:
+                newIndices.append(self.significantZonesIndices[i])
+                i += 1
+        self.significantZonesIndices = newIndices
+        self._CalculateZoneValues()
 
 
     def _DropResults(self, dropIndices):
