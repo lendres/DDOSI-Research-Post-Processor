@@ -38,6 +38,7 @@ class SegmentSignal():
         """
         self.xData = xData
 
+
     def Segment(
             self,
             signal,
@@ -97,7 +98,7 @@ class SegmentSignal():
             raise Exception("An invalid event density estimated after threshold, reduce/increase f and rerun.")
 
         if results.Error > 0:
-            message = "The logarithm argument became zero at sample number " + str(results.Error)
+            message =  "The logarithm argument became zero at sample number " + str(results.Error)
             message += " during the calculation of likelihood ratios in Single Most Likelihood Replacement iterations.  "
             message += "There may be more samples of this type which may give rise to this problem, edit/rescale data values and rerun."
             raise Exception(message)
@@ -107,6 +108,20 @@ class SegmentSignal():
 
 
     def PlotFileteredSignal(self, axis, **kwargs):
+        """
+        Plots the filtered signal calculated during the signal segmentation.
+
+        Parameters
+        ----------
+        axis : matplotlib.pyplot.axis
+            The axis of the plot.
+        **kwargs : keyword arguments
+            These arguments are passed on to the plot function.
+
+        Returns
+        -------
+        None.
+        """
         if self.xData is None:
             raise Exception("The x-axis data was not set.")
 
@@ -114,21 +129,53 @@ class SegmentSignal():
 
 
     def PlotSegmentedSignal(self, axis, **kwargs):
+        """
+        Plots the calculated segmented signal.
+
+        Parameters
+        ----------
+        axis : matplotlib.pyplot.axis
+            The axis of the plot.
+        **kwargs : keyword arguments
+            These arguments are passed on to the plot function.
+
+        Returns
+        -------
+        None.
+        """
         if self.xData is None:
             raise Exception("The x-axis data was not set.")
 
-        axis.plot(self.xData, self.results.SegmentedLog, color="red", label="Segmented Signal", **kwargs)
+        # It seems like we can't just pass two of the same keyword arguments (like "label") and have them automatically overwrite
+        # the first value.  So if we want to use defaults for label and color, while allowing them to be overwritten, we need to
+        # create a new dictionary and overwrite them in the process of creating it.
+        kwargs = {"label" : "Segmented Signal", "color" : "red", **kwargs}
+        axis.plot(self.xData, self.results.SegmentedLog, **kwargs)
 
 
     def PlotBinaryEvents(self, axis, **kwargs):
+        """
+        Plots the binary events (the "1"s in the binary event sequence) as vertical lines.
+
+        Parameters
+        ----------
+        axis : matplotlib.pyplot.axis
+            The axis of the plot.
+        **kwargs : keyword arguments
+            These arguments are passed on to the plot function.
+
+        Returns
+        -------
+        None.
+        """
         yData = PlotHelper.GetYBoundaries(axis)
 
-        label="Segment Boundry"
+        label = "Segment Boundry"
 
         for i in range(self.results.SignalLength):
             if self.results.BinaryEventSequence[i]:
                 #"mediumvioletred"
                 kwargs.setdefault("linewidth", 0.5)
                 kwargs.setdefault("color", "orchid")
-                axis.plot([self.xData[i], self.xData[i]], yData, **kwargs, label=label)
+                axis.plot([self.xData[i], self.xData[i]], yData, label=label, **kwargs)
                 label = None
