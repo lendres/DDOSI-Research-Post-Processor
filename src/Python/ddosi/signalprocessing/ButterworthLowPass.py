@@ -11,8 +11,10 @@ from   scipy.signal                              import filtfilt
 def ButterworthLowPassFilter(data, cutOffFrequency, samplingFrequency, order):
     nyquistFrequency = int(samplingFrequency/2.0)
     normalCutOff = cutOffFrequency / nyquistFrequency
+
     # Get the filter coefficients.
     # Analog is false because we are using regularly sampled data.
     b, a = butter(order, normalCutOff, btype="low", analog=False)
     y    = filtfilt(b, a, data)
+
     return y, b, a
