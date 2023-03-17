@@ -223,3 +223,26 @@ class SignificantZones():
         newSignificantZones.significantZonesIndices = intersections
         newSignificantZones._CalculateZoneValues()
         return newSignificantZones
+
+
+    def ExtractDataByZones(self, data, zones):
+        keepIndices = []
+
+        # Allow for input of a single zone by converting it to a list so the loop below works.
+        if type(zones) is not list:
+            zones = [zones]
+
+        for zone in zones:
+            # Indices in the DataFrame.
+            startIndex = (self.significantZonesIndices[zone])[0]
+            endIndex   = (self.significantZonesIndices[zone])[1]
+
+            keepIndices = list(chain(keepIndices, range(startIndex, endIndex)))
+
+        # Start with a list of all the indices and remove the ones we are keeping to generate a list of dropped indices.
+        allIndices  = range(data.shape[0])
+        dropIndices = [i for i in allIndices if i not in keepIndices]
+
+        # Generate new data as a subset of the old.
+        dataSubset = data.drop(dropIndices, inplace=False).reset_index()
+        return dataSubset
