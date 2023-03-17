@@ -10,54 +10,37 @@ class Plots():
 
     @classmethod
     def NewWobAndRpmPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", rpmColumn="RPM", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [rpmColumn], **kwargs)
+        figure, axes = PlotMaker.NewMultiAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
-        rightAxis.set_ylabel("Revolutions per Minute")
+        PlotHelper.Label(axes[0], title, "Time (s)", "Weight on Bit (tons)")
+        axes[1].set_ylabel("Revolutions per Minute")
 
-        return figure, (leftAxis, rightAxis)
+        return figure, axes
 
 
     @classmethod
-    def NewWobAndTobPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", tobColumn="TOB", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [tobColumn], **kwargs)
-
-        # Labels.
-        PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
-        rightAxis.set_ylabel("Torque (daN.m)")
-
-        return figure, (leftAxis, rightAxis)
+    def NewTobWobAndRpmPlot(cls, title, data, xAxisColumn="Time", tobColumn="TOB", wobColumn="WOB", rpmColumn="RPM", **kwargs):
+        return cls.NewParameterVersusWobAndRpmPlot(title, data, xAxisColumn, "Torque (daN.m)", tobColumn, wobColumn, rpmColumn, **kwargs)
 
 
     @classmethod
-    def NewWobAndRopPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", ropColumn="ROP", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [ropColumn], **kwargs)
-
-        # Labels.
-        PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
-        rightAxis.set_ylabel("Rate of Penetration (cm/s)")
-
-        return figure, (leftAxis, rightAxis)
+    def NewRopWobAndRpmPlot(cls, title, data, xAxisColumn="Time", ropColumn="ROP", wobColumn="WOB", rpmColumn="RPM", **kwargs):
+        return cls.NewParameterVersusWobAndRpmPlot(title, data, xAxisColumn, "Rate of Penetration (cm/s)", ropColumn, wobColumn, rpmColumn, **kwargs)
 
 
     @classmethod
-    def NewRopWobAndRpmPlot(cls, title, data, xAxisColumn="Time", ropColumn="ROP", wobColumn="WOB", rpmColumn="TOB", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.CreateThreeAxisPlot(data, xAxisColumn, [ropColumn], [wobColumn, rpmColumn], **kwargs)
-
-        # Labels.
-        PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
-        rightAxis.set_ylabel("Torque (daN.m)")
-
-        return figure, (leftAxis, rightAxis)
+    def NewDepthOfCutWobAndRpmPlot(cls, title, data, xAxisColumn="Time", depthOfCutColumn="Depth of Cut", wobColumn="WOB", rpmColumn="RPM", **kwargs):
+        return cls.NewParameterVersusWobAndRpmPlot(title, data, xAxisColumn, "Depth of Cut (cm/revolution)", depthOfCutColumn, wobColumn, rpmColumn, **kwargs)
 
 
     @classmethod
-    def NewWobAndDepthOfCutPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", depthOfCutColumn="Depth of Cut", **kwargs):
-        figure, (leftAxis, rightAxis) = PlotMaker.NewTwoAxesPlot(data, xAxisColumn, [wobColumn], [depthOfCutColumn], **kwargs)
+    def NewParameterVersusWobAndRpmPlot(cls, title, data, xAxisColumn, parameterLabel, parameterColumn, wobColumn="WOB", rpmColumn="RPM", **kwargs):
+        figure, axes = PlotMaker.NewMultiAxesPlot(data, xAxisColumn, [[parameterColumn], [wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        PlotHelper.Label(leftAxis, title, "Time (s)", "Weight on Bit (tons)")
-        rightAxis.set_ylabel("Depth of Cut (cm/revolution)")
+        PlotHelper.Label(axes[0], title, "Time (s)", parameterLabel)
+        axes[1].set_ylabel("Weight on Bit (tons)")
+        axes[2].set_ylabel("Revolutions per Minute")
 
-        return figure, (leftAxis, rightAxis)
+        return figure, axes
