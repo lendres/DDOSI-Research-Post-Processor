@@ -7,7 +7,7 @@ from   enum                                      import auto
 
 class NoiseVarianceEstimateMethod(IntEnum):
     # Point estimate.
-    Point           = 0,
+    Point           = 0
 
     # Smoothed estimate.
     Smoothed        = auto()
