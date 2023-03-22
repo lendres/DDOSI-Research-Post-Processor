@@ -38,6 +38,18 @@ class SignificantZones():
         self.xData   = xData
 
 
+    def Copy(self, xData=None):
+        newSignificantZones = SignificantZones(self.results, self.xData)
+        newSignificantZones.significantZonesIndices     = self.significantZonesIndices
+        newSignificantZones.significantZoneValues       = self.significantZoneValues
+
+        if xData is not None:
+            newSignificantZones.xData = xData
+            newSignificantZones._CalculateZoneValues()
+
+        return newSignificantZones
+
+
     def FindSignificantZones(self, threshold, includeBoundaries=False):
         if self.results is None:
             raise Exception("There are no results.  You must first run \"Segment\".")
@@ -50,6 +62,14 @@ class SignificantZones():
 
 
     def _CalculateZoneValues(self):
+        """
+        Retrieves
+
+        Returns
+        -------
+        None.
+
+        """
         self.significantZoneValues   = [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
 
 
@@ -75,7 +95,7 @@ class SignificantZones():
 
         label = legendPrefix+" "+"Zone" if legendPrefix!="" else "Zone"
         for zone, i in zip(self.significantZoneValues, range(self.NumberOfSignificantZones)):
-            plt.fill_between(zone, yTop, yBottom, color="blue", alpha=0.15, label=label)
+            plt.fill_between(zone, yTop, yBottom, facecolor=(0,0,1,0.075), edgecolor=(0,0,1,0.30), label=label)
             axis.annotate(
                 i,
                 xy=(np.average(zone), yTop[0]),                                # Point to annotate (top center of fill).
@@ -158,7 +178,6 @@ class SignificantZones():
         startZone  = zones[0]
         i = 0
         while i < len(self.significantZonesIndices):
-            print(i)
             if i == startZone:
                 # Get the start index of the merged zones.
                 startIndex = (self.significantZonesIndices[i])[0]
