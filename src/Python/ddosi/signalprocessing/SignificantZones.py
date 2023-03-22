@@ -15,7 +15,6 @@ from   lendres.plotting.PlotHelper               import PlotHelper
 
 class SignificantZones():
     significantZonesIndices     = None
-    significantZoneValues       = None
     xData                       = None
 
     def __init__(self, segmentationResults, xData=None):
@@ -41,11 +40,9 @@ class SignificantZones():
     def Copy(self, xData=None):
         newSignificantZones = SignificantZones(self.results, self.xData)
         newSignificantZones.significantZonesIndices     = self.significantZonesIndices
-        newSignificantZones.significantZoneValues       = self.significantZoneValues
 
         if xData is not None:
             newSignificantZones.xData = xData
-            newSignificantZones._CalculateZoneValues()
 
         return newSignificantZones
 
@@ -58,10 +55,9 @@ class SignificantZones():
             raise Exception("The x-axis data was not set.")
 
         self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, self.xData, threshold, includeBoundaries)
-        self._CalculateZoneValues()
 
 
-    def _CalculateZoneValues(self):
+    def GetZoneValues(self):
         """
         Retrieves
 
@@ -70,7 +66,7 @@ class SignificantZones():
         None.
 
         """
-        self.significantZoneValues   = [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
+        return [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
 
 
     @property
@@ -94,7 +90,7 @@ class SignificantZones():
         yTop    = [yData[1], yData[1]]
 
         label = legendPrefix+" "+"Zone" if legendPrefix!="" else "Zone"
-        for zone, i in zip(self.significantZoneValues, range(self.NumberOfSignificantZones)):
+        for zone, i in zip(self.GetZoneValues(), range(self.NumberOfSignificantZones)):
             plt.fill_between(zone, yTop, yBottom, facecolor=(0,0,1,0.075), edgecolor=(0,0,1,0.30), label=label)
             axis.annotate(
                 i,
@@ -119,14 +115,13 @@ class SignificantZones():
 
         if keep:
             dropIndices = list(chain(range(0, startIndex-1), range(endIndex+1, data.shape[0])))
-            dropZones   = list(chain(range(0, startZone-1),  range(endZone+1, len(self.significantZoneValues)-1)))
+            dropZones   = list(chain(range(0, startZone-1),  range(endZone+1, len(self.significantZonesIndices)-1)))
         else:
             dropIndices = list(range(startIndex, endIndex))
             dropZones   = list(range(startZone, endZone))
 
         self._DropResults(dropIndices)
         self.significantZonesIndices = np.delete(self.significantZonesIndices, dropZones)
-        self.significantZoneValues   = np.delete(self.significantZoneValues, dropZones)
 
         # Generate new data as a subset of the old.
         dataSubset = data.drop(dropIndices, inplace=False).reset_index()
@@ -157,17 +152,14 @@ class SignificantZones():
         None.
         """
         newIndices = []
-        newValues  = []
 
         # Loop through the zones and copy all values expcept those specified in the input.
         for i in range(0, len(self.significantZonesIndices)):
             if not i in zones:
                 newIndices.append(self.significantZonesIndices[i])
-                newValues.append(self.significantZoneValues[i])
 
         # Update the class's indices and values.
         self.significantZonesIndices = newIndices
-        self.significantZoneValues   = newValues
 
 
     def MergeZones(self, zones):
@@ -191,7 +183,6 @@ class SignificantZones():
                 newIndices.append(self.significantZonesIndices[i])
                 i += 1
         self.significantZonesIndices = newIndices
-        self._CalculateZoneValues()
 
 
     def _DropResults(self, dropIndices):
@@ -240,7 +231,6 @@ class SignificantZones():
                     intersections.append([largestMin, smallestMax])
         newSignificantZones = SignificantZones(self.results, self.xData)
         newSignificantZones.significantZonesIndices = intersections
-        newSignificantZones._CalculateZoneValues()
         return newSignificantZones
 
 
