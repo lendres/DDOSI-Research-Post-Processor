@@ -10,7 +10,7 @@ class Plots():
 
     @classmethod
     def NewWobAndRpmPlot(cls, title, data, xAxisColumn="Time", wobColumn="WOB", xUnits="s", rpmColumn="RPM", **kwargs):
-        figure, axes = PlotMaker.NewMultiAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
+        figure, axes = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
         PlotHelper.Label(axes[0], title, xAxisColumn+" ("+xUnits+")", "Weight on Bit (tons)")
@@ -19,12 +19,12 @@ class Plots():
         return figure, axes
 
     @classmethod
-    def NewDepthBasedWobAndRpmPlot(cls, title, data, xAxisColumn="Depth", wobColumn="WOB", xUnits="cm", rpmColumn="RPM", **kwargs):
-        figure, axes = PlotMaker.NewMultiAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
+    def NewDepthBasedWobAndRpmPlot(cls, title, data, yAxisColumn="Depth", wobColumn="WOB", yUnits="cm", rpmColumn="RPM", **kwargs):
+        figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        PlotHelper.Label(axes[0], title, xAxisColumn+" ("+xUnits+")", "Weight on Bit (tons)")
-        axes[1].set_ylabel("Revolutions per Minute")
+        PlotHelper.Label(axes[0], title, "Weight on Bit (tons)", yAxisColumn+" ("+yUnits+")")
+        axes[1].set_xlabel("Revolutions per Minute")
 
         return figure, axes
 
@@ -45,7 +45,7 @@ class Plots():
 
     @classmethod
     def NewParameterVersusWobAndRpmPlot(cls, title, data, xAxisColumn, parameterLabel, parameterColumn, wobColumn="WOB", rpmColumn="RPM", **kwargs):
-        figure, axes = PlotMaker.NewMultiAxesPlot(data, xAxisColumn, [[parameterColumn], [wobColumn], [rpmColumn]], **kwargs)
+        figure, axes = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[parameterColumn], [wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
         PlotHelper.Label(axes[0], title, "Time (s)", parameterLabel)
