@@ -20,7 +20,7 @@ class Plots():
 
     @classmethod
     def NewDepthBasedWobAndRpmPlot(cls, title, data, yAxisColumn="Depth", wobColumn="WOB", yUnits="cm", rpmColumn="RPM", **kwargs):
-        PlotHelper.scale      = 0.5
+        PlotHelper.scale      = 0.4
         PlotHelper.widthScale = 0.35
         figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
@@ -29,7 +29,7 @@ class Plots():
         PlotHelper.ReverseYAxisLimits(axes[0])
         axes[1].set_xlabel("Revolutions per Minute")
 
-        PlotHelper.scale      = 1.0
+        PlotHelper.scale      = 0.8
         PlotHelper.widthScale = 1.0
 
         return figure, axes
