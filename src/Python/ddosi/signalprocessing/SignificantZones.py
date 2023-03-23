@@ -38,8 +38,8 @@ class SignificantZones():
 
 
     def Copy(self, xData=None):
-        newSignificantZones = SignificantZones(self.results, self.xData)
-        newSignificantZones.significantZonesIndices     = self.significantZonesIndices
+        newSignificantZones                         = SignificantZones(self.results, self.xData)
+        newSignificantZones.significantZonesIndices = self.significantZonesIndices
 
         if xData is not None:
             newSignificantZones.xData = xData
