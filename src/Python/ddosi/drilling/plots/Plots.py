@@ -2,8 +2,9 @@
 Created on March 15, 2023
 @author: Lance A. Endres
 """
-from   lendres.plotting.PlotHelper                         import PlotHelper
-from   lendres.plotting.PlotMaker                          import PlotMaker
+from   lendres.plotting.PlotHelper               import PlotHelper
+from   lendres.plotting.PlotMaker                import PlotMaker
+from   lendres.plotting.AxesHelper               import AxesHelper
 
 class Plots():
 
@@ -13,10 +14,11 @@ class Plots():
         figure, axes = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        PlotHelper.Label(axes[0], title, xAxisColumn+" ("+xUnits+")", "Weight on Bit (tons)")
+        AxesHelper.Label(axes[0], title, xAxisColumn+" ("+xUnits+")", "Weight on Bit (tons)")
         axes[1].set_ylabel("Revolutions per Minute")
 
         return figure, axes
+
 
     @classmethod
     def NewDepthBasedWobAndRpmPlot(cls, title, data, yAxisColumn="Depth", wobColumn="WOB", yUnits="cm", rpmColumn="RPM", **kwargs):
@@ -25,14 +27,15 @@ class Plots():
         figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        PlotHelper.Label(axes[0], title, "Weight on Bit (tons)", yAxisColumn+" ("+yUnits+")")
-        PlotHelper.ReverseYAxisLimits(axes[0])
+        AxesHelper.Label(axes[0], title, "Weight on Bit (tons)", yAxisColumn+" ("+yUnits+")")
+        AxesHelper.ReverseYAxisLimits(axes[0])
         axes[1].set_xlabel("Revolutions per Minute")
 
         PlotHelper.scale      = 0.8
         PlotHelper.widthScale = 1.0
 
         return figure, axes
+
 
     @classmethod
     def NewTobWobAndRpmPlot(cls, title, data, xAxisColumn="Time", tobColumn="TOB", wobColumn="WOB", rpmColumn="RPM", **kwargs):
@@ -54,7 +57,7 @@ class Plots():
         figure, axes = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[parameterColumn], [wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        PlotHelper.Label(axes[0], title, "Time (s)", parameterLabel)
+        AxesHelper.Label(axes[0], title, "Time (s)", parameterLabel)
         axes[1].set_ylabel("Weight on Bit (tons)")
         axes[2].set_ylabel("Revolutions per Minute")
 

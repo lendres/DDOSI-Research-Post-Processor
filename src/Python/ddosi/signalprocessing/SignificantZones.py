@@ -12,6 +12,7 @@ from   SegmentSignalPy                           import SegmentationResults
 from   SegmentSignalPy                           import FindSignificantZones
 
 from   lendres.plotting.PlotHelper               import PlotHelper
+from   lendres.plotting.AxesHelper               import AxesHelper
 
 class SignificantZones():
     significantZonesIndices     = None
@@ -84,7 +85,7 @@ class SignificantZones():
         if self.significantZonesIndices is None:
             raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
 
-        yData = PlotHelper.GetYBoundaries(axis)
+        yData = AxesHelper.GetYBoundaries(axis)
 
         yBottom = [yData[0], yData[0]]
         yTop    = [yData[1], yData[1]]
