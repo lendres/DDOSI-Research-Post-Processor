@@ -2,9 +2,9 @@
 Created on March 15, 2023
 @author: Lance A. Endres
 """
-from   lendres.plotting.PlotHelper               import PlotHelper
-from   lendres.plotting.PlotMaker                import PlotMaker
-from   lendres.plotting.AxesHelper               import AxesHelper
+from   lendres.plotting.PlotHelper                                   import PlotHelper
+from   lendres.plotting.PlotMaker                                    import PlotMaker
+from   lendres.plotting.AxesHelper                                   import AxesHelper
 
 class Plots():
 
