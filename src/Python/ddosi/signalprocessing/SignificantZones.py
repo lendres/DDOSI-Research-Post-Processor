@@ -48,7 +48,22 @@ class SignificantZones():
         return newSignificantZones
 
 
-    def FindSignificantZones(self, threshold, includeBoundaries=False):
+    def FindSignificantZones(self, threshold:float, includeBoundaries:bool=False):
+        """
+        Finds the zones that are longer than the specified threshold.  The threshold is in the x-axis units.  For example, if plotted in time, the
+        threshold would be in seconds, minutes, et cetera.
+
+        Parameters
+        ----------
+        threshold : float
+            The minimum length a zone must be to qualify as significant.  Zones smaller than this are ignored.
+        includeBoundaries : bool, optional
+            Specifies if the boundaries should be included as part of the zone.  I.e., the starting edge and trailing edge (binary event). The default is False.
+
+        Returns
+        -------
+        None.
+        """
         if self.results is None:
             raise Exception("There are no results.  You must first run \"Segment\".")
 
@@ -60,12 +75,11 @@ class SignificantZones():
 
     def GetZoneValues(self):
         """
-        Retrieves
+        Retrieves the values associated with the zone boundry indices.
 
         Returns
         -------
         None.
-
         """
         return [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
 
