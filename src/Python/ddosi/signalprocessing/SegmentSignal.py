@@ -42,11 +42,11 @@ class SegmentSignal():
     def Segment(
             self,
             signal,
-            threshold,
-            jumpSequenceWindowSize=10,
-            noiseVarianceWindowSize=None,
+            threshold:float,
+            jumpSequenceWindowSize:int=10,
+            noiseVarianceWindowSize:int=None,
             noiseVarianceEstimateMethod=NoiseVarianceEstimateMethod.Point,
-            maxSMLRIterations=300
+            maxSMLRIterations:int=300
         ):
         """
         Signal Segmentation Algorithm of Radhakrishnan, et al.  The algorithm is useful for dividing
@@ -58,12 +58,12 @@ class SegmentSignal():
         ----------
         signal : array like
             Input signal to be segmented.
-        threshold : double
+        threshold : float
             Segmentation threshold.
-        jumpSequenceWindowSize : integer, optional
+        jumpSequenceWindowSize : int, optional
             Length of the moving average window sized used for smoothing the input well log
             to arrive at an initial estimate of the jump sequence variance. The default is 10.
-        noiseVarianceWindowSize : integer, optional
+        noiseVarianceWindowSize : int, optional
             Length of the moving average window used for smoothing the noise variances. It
             is recommended to be approximatly half of the jumpSequenceWindowSize.  If it is
             "None" the window will automatically be selected as half the jumpSequenceWindowSize
@@ -73,7 +73,7 @@ class SegmentSignal():
     		    0 : Point estimate of noise variance.
     		    1 : Noise estimates smoothed within segments.
             The default is NoiseVarianceEstimateMethod.Point.
-        maxSMLRIterations : integer, optional
+        maxSMLRIterations : int, optional
             Upper bound on the number of Single Most Likelihood Replacement iterations. The
             default is 300.
 
