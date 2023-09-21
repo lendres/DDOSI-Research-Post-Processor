@@ -73,15 +73,61 @@ class SignificantZones():
         self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, self.xData, threshold, includeBoundaries)
 
 
-    def GetZoneValues(self):
+    def InvertSignificantZones(self, ignoreStart=False, ignoreEnd=False):
+
+        newIndices = []
+
+        firstIndex = (self.significantZonesIndices[0])[0]
+        if firstIndex > 0 and not ignoreStart:
+            newIndices.append([0, firstIndex])
+
+        numberOfZones = self.NumberOfSignificantZones
+
+        for i in range(numberOfZones-1):
+            newIndices.append([(self.significantZonesIndices[i])[1], (self.significantZonesIndices[i+1])[0]])
+
+        lastIndex     = (self.significantZonesIndices[numberOfZones-1])[1]
+        dataLastIndex = len(self.xData) - 1
+        if dataLastIndex > lastIndex and not ignoreEnd:
+            newIndices.append([lastIndex, dataLastIndex])
+
+        # Save the new indices.
+        self.significantZonesIndices = newIndices
+
+
+    def GetZoneValues(self, zones:int|list=None):
         """
         Retrieves the values associated with the zone boundry indices.
 
+        Parameters
+        ----------
+        zones : int|list
+            The zones to extract the values for.  If None is specified, all the zone values are returned.  The default is None.
+
         Returns
         -------
-        None.
+        : list | list of lists
+            The start and stop value of each requested zone.  If only one zone is requested, a list is returned.  If multiple zones are requested,
+            return a list of lists.
         """
-        return [[self.xData[pointSet[0]], self.xData[pointSet[1]]] for pointSet in self.significantZonesIndices]
+        match zones:
+            case None:
+                # Convert all the indices to values.
+                return [[self.xData[indexSet[0]], self.xData[indexSet[1]]] for indexSet in self.significantZonesIndices]
+
+            case int() | np.int64():
+                # Extract just the one zone of interest and return it as a list.
+                zone = self.significantZonesIndices[zones]
+                return [self.xData[zone[0]], self.xData[zone[1]]]
+
+            case list():
+                # Extract the request set of zones and convert those indices to values.
+                zones = [self.significantZonesIndices[zone] for zone in zones]
+                return [[self.xData[indexSet[0]], self.xData[indexSet[1]]] for indexSet in zones]
+
+
+            case default:
+                raise Exception("The parameters 'zones' is an unknown type.")
 
 
     @property
@@ -104,7 +150,8 @@ class SignificantZones():
         yBottom = [yData[0], yData[0]]
         yTop    = [yData[1], yData[1]]
 
-        label = legendPrefix+" "+"Zone" if legendPrefix!="" else "Zone"
+        label = legendPrefix+" "+"Zone" if legendPrefix != "" else "Zone"
+
         for zone, i in zip(self.GetZoneValues(), range(self.NumberOfSignificantZones)):
             plt.fill_between(zone, yTop, yBottom, facecolor=(0,0,1,0.075), edgecolor=(0,0,1,0.30), label=label)
             axis.annotate(
@@ -129,14 +176,18 @@ class SignificantZones():
         endIndex   = (self.significantZonesIndices[endZone])[1]
 
         if keep:
-            dropIndices = list(chain(range(0, startIndex-1), range(endIndex+1, data.shape[0])))
-            dropZones   = list(chain(range(0, startZone-1),  range(endZone+1, len(self.significantZonesIndices)-1)))
+            dropIndices = list(chain(range(0, startIndex), range(endIndex+1, data.shape[0])))
+            dropZones   = list(chain(range(0, startZone),  range(endZone+1, len(self.significantZonesIndices))))
+
+            # If we are keeping the zones, some data at the start can be removed, so we have to adjust the indices to account.
+            self.significantZonesIndices -= startIndex
         else:
-            dropIndices = list(range(startIndex, endIndex))
-            dropZones   = list(range(startZone, endZone))
+            dropIndices = list(range(startIndex, endIndex+1))
+            dropZones   = list(range(startZone, endZone+1))
+            self._AdjustZoneIndicesForRemovedSection(startIndex, endIndex)
 
         self._DropResults(dropIndices)
-        self.significantZonesIndices = np.delete(self.significantZonesIndices, dropZones)
+        self.significantZonesIndices = np.delete(self.significantZonesIndices, dropZones, axis=0)
 
         # Generate new data as a subset of the old.
         dataSubset = data.drop(dropIndices, inplace=False).reset_index()
@@ -150,6 +201,32 @@ class SignificantZones():
             self.xData = xData.drop(dropIndices, inplace=False).reset_index()
 
         return dataSubset
+
+
+    def _AdjustZoneIndicesForRemovedSection(self, startIndex:int, endIndex:int):
+        """
+        Adjusts the zone indices for remove a section of data from the middle.
+
+        Parameters
+        ----------
+        startIndex : int
+            The starting index of the removed data.
+        endIndex : int
+            The ending index of the removed data.
+
+        Returns
+        -------
+        None.
+        """
+        length = endIndex - startIndex
+
+        # Loop over the signficant zones.  For everthing before the start zone, we just copy the zone indices.  Once we find the start zone, we
+        # create a set of indices out of the start of the start zone and end of the end zone.  The remaining indices are then copied.
+        for i in range(len(self.significantZonesIndices)):
+            # If the current zone ends after the end index, we need to start subtracting the removed indices.
+            if (self.significantZonesIndices[i])[1] > endIndex:
+                for j in range(len(self.significantZonesIndices[i])):
+                    (self.significantZonesIndices[i])[j] -= length
 
 
     def IgnoreZones(self, zones):
@@ -177,26 +254,49 @@ class SignificantZones():
         self.significantZonesIndices = newIndices
 
 
-    def MergeZones(self, zones):
+    def MergeZones(self, zones:list):
+        """
+        Creates one zone out of everything between the start zone and the end zone.  This includes any intermediate zones and any data that was otherwise excluded.  Saves
+        the new set of zone indices to self.
+
+        Parameters
+        ----------
+        zones : list
+            The start zone and end zone indices.
+
+        Returns
+        -------
+        None.
+        """
         if len(zones) < 1:
             return
 
         newIndices = []
         startZone  = zones[0]
-        i = 0
+        i          = 0
+
+        # Loop over the signficant zones.  For everthing before the start zone, we just copy the zone indices.  Once we find the start zone, we
+        # create a set of indices out of the start of the start zone and end of the end zone.  The remaining indices are then copied.
         while i < len(self.significantZonesIndices):
             if i == startZone:
-                # Get the start index of the merged zones.
+                # Get the start index of the merged zones (start of the start zone).
                 startIndex = (self.significantZonesIndices[i])[0]
 
                 # Use the end zone to get the end index.
-                endZone = zones[1]
+                endZone    = zones[1]
                 endIndex   = (self.significantZonesIndices[endZone])[1]
+
+                # Create a new zone from the start of the start zone and end of the end zone.
                 newIndices.append([startIndex, endIndex])
+
+                # We need to now skip to the next zone.
                 i = endZone + 1
             else:
+                # Copy the existing indices and move to the next zone.
                 newIndices.append(self.significantZonesIndices[i])
                 i += 1
+
+        # Save the new indices.
         self.significantZonesIndices = newIndices
 
 
@@ -236,7 +336,6 @@ class SignificantZones():
 
 
     def IntersectionSignificantZones(self, otherSignificantZones):
-        print()
         intersections = []
         for zone in self.significantZonesIndices:
             for otherZone in otherSignificantZones.significantZonesIndices:
