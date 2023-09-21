@@ -7,17 +7,18 @@ from   lendres.plotting.AxesHelper                                   import Axes
 from   lendres.plotting.PlotHelper                                   import PlotHelper
 from   lendres.plotting.PlotMaker                                    import PlotMaker
 
+
 class Plots():
 
 
     @classmethod
-    def NewWobAndRotarySpeedPlot(cls, title:str, data:pd.DataFrame, yAxisColumn:str="Depth", wobColumn:str="WOB", yUnits:str="cm", rpmColumn:str="RPM", **kwargs):
+    def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, yAxisColumn:str="Depth", wobColumn:str="WOB", yUnits:str="cm", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
         PlotHelper.scale      = 0.4
         PlotHelper.widthScale = 0.35
         figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Labels.
-        AxesHelper.Label(axes[0], title, "Weight on Bit (tons)", yAxisColumn+" ("+yUnits+")")
+        AxesHelper.Label(axes[0], title, "Weight on Bit (tons)", yAxisColumn+" ("+yUnits+")", titleSuffix=titleSuffix)
         AxesHelper.ReverseYAxisLimits(axes[0])
         axes[1].set_xlabel("Revolutions per Minute")
 

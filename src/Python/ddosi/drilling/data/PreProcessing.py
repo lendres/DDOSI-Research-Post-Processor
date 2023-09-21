@@ -45,7 +45,7 @@ class PreProcessing():
 
 
     @classmethod
-    def CalculateDepthOfCutFromRopAndRpm(cls, data, ropColumn="ROP", rpmColumn="RPM"):
+    def CalculateDepthOfCutFromRopAndRpm(cls, data, ropColumn="ROP", rpmColumn="Rotary Speed"):
         """
         Calculates the depth of cut from the rate of penetration and revolutions per minute.
 
@@ -56,7 +56,7 @@ class PreProcessing():
         ropColumn : string, optional
             The column name of the rate of penetration data. The default is "ROP".
         rpmColumn : string, optional
-            The column name of the angular velocity data. The default is "RPM".
+            The column name of the angular velocity data. The default is "Rotary Speed".
 
         Returns
         -------

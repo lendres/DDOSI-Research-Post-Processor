@@ -10,7 +10,7 @@ class DesignatedColors():
         {
             "WOB"                    : {bytes.fromhex("1f77b4"), bytes.fromhex("ff7f0e")}
             "Corrected WOB"          : ,
-            "RPM"                    : bytes.fromhex("2ca02c"),
+            "Rotary Speed"           : bytes.fromhex("2ca02c"),
         }
     )
 
