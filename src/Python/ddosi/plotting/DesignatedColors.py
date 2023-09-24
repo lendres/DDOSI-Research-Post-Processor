@@ -6,69 +6,106 @@ import pandas                                                        as pd
 from   PIL                                                           import ImageColor
 import os
 
+from   lendres.path.File                                             import File
+from   lendres.plotting.PlotHelper                                   import PlotHelper
+
 
 class DesignatedColors():
-    # colors = pd.DataFrame(
-    #     {
-    #         "Acceleration X"         : ["dd8452"],
-    #         "Acceleration Y"         : ["55a868"],
-    #     },
-    #     index=[0]
-    # )
+    colors          = None
+    usedColors      = None
+    numberOfColors = 0
 
-    colors = pd.DataFrame(
-        {
-            "Acceleration X"         : ["#dd8452"],
-            "Acceleration Y"         : ["#55a868"],
-            "Acceleration Z"         : ["#c44e52"],
-            "Acceleration XY"        : ["#8172b3"],
-            "Depth of Cut"           : ["#c44e52"],
-            "Rotary Speed"           : ["#dd8452"],
-            "Torque"                 : ["#55a868"],
-            "Weight on Bit"          : ["#4c72b0"], #, bytes.fromhex("64b5cd")
-        },
-        index=[0]
-    )
 
-    # colors = pd.DataFrame(
-    #     {
-    #         "Weight on Bit"          : {bytes.fromhex("1f77b4"), bytes.fromhex("ff7f0e")},
-    #         "Rotary Speed"           : {bytes.fromhex("2ca02c")},
-    #     }
-    # )
+    @classmethod
+    def Initialize(cls, file:str=None):
+        if file is None:
+            file = os.path.join(File.GetDirectory(__file__), "Colors.xlsx")
 
-    def __init__(self):
-        self.colors.to_csv("Colors.csv")
+        if not File.ContainsDirectory(file):
+            file = os.path.join(File.GetDirectory(__file__), file)
 
-        #self.colors = pd.read_csv("Colors.csv")
-        # print("\n\n\n\n")
-        # print(self.colors)
+        cls.colors         = pd.read_excel(file, index_col=0)
+        cls.numberOfColors = len(cls.colors.columns)
+        # cls._FillRows()
 
-        # self.colors.map(lambda x : ImageColor.getrgb(x))
 
-        self.colors = pd.read_excel(os.path.join(os.path.dirname(__file__), "Colors.xlsx"), index_col=0)
-        self._FillRows()
+    @classmethod
+    def _FillRows(cls):
+        columnRange = range(1, len(cls.colors.columns))
 
-        # print(self.colors)
-        # print(self.colors.info())
-        # print("Cell type:", type(self.colors.iloc[0, 0]))
-
-    def _FillRows(self):
-        columnRange = range(1, len(self.colors.columns))
-
-        for i in range(len(self.colors)):
+        for i in range(len(cls.colors)):
             lastColor = 0
 
             for j in columnRange:
-                if pd.isna(self.colors.iloc[i, j]):
-                    self.colors.iloc[i, j] = self.colors.iloc[i, lastColor]
+                if pd.isna(cls.colors.iloc[i, j]):
+                    cls.colors.iloc[i, j] = cls.colors.iloc[i, lastColor]
                 else:
-                    self.colors.iloc[i, j] =  ImageColor.getrgb(self.colors.iloc[i, j])
+                    cls.colors.iloc[i, j] =  cls.colors.iloc[i, j]
                     lastColor = j
 
-        # Add a column to remember the active color.
-        self.colors["Active"] = 0
 
     @classmethod
-    def GetColor(cls, name):
-        pass
+    def GetColors(cls, names:list):
+        # Add a column to remember the active color.
+        cls.colors["Active"] = 0
+        cls.usedColors       = []
+
+        colors = cls._GetNamedColors(names)
+        print(colors)
+        cls._FillRemainingColors(colors)
+        print(colors)
+        return colors
+
+
+    @classmethod
+    def _GetNamedColors(cls, item:str|list):
+
+        match item:
+            case str():
+                # matches = []
+                categories = cls.colors.index.values
+                matches    = [category for category in categories if item.startswith(category)]
+                if len(matches) > 0:
+                    # Find the best match of the matches and return the color for that category.
+                    category = max(matches, key=len)
+                    return cls._GetCategoryColor(category)
+                else:
+                    return ""
+
+            case list():
+                colors = [cls._GetNamedColors(entry) for entry in item]
+                return colors
+
+
+    @classmethod
+    def _GetCategoryColor(cls, category):
+        column = cls.colors.loc[category, "Active"]
+
+        if column == cls.numberOfColors or pd.isna(cls.colors.loc[category, column]):
+            return ""
+        else:
+            cls.colors.loc[category, "Active"] = column + 1
+            color                             = cls.colors.loc[category, column]
+            cls.usedColors.append(color)
+            return color
+
+
+    @classmethod
+    def _FillRemainingColors(cls, colors):
+
+        for i in range(len(colors)):
+            match colors[i]:
+                case str():
+                    if colors[i] == "":
+                        colors[i] = cls._GetNextColor()
+                case list():
+                    cls._FillRemainingColors(colors[i])
+
+
+    @classmethod
+    def _GetNextColor(cls):
+        color = PlotHelper.NextColorAsHex()
+        while color in cls.usedColors:
+            color = PlotHelper.NextColorAsHex()
+            pass
+        return color

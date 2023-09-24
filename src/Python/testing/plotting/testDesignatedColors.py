@@ -6,6 +6,7 @@ Created on September 22, 2023
 import pandas                                                        as pd
 import numpy                                                         as np
 import matplotlib.pyplot                                             as plt
+import os
 
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
 
@@ -25,7 +26,8 @@ class TestDesignatedColors(unittest.TestCase):
 
 
     def setUp(self):
-        self.designatedColors = DesignatedColors()
+        file                  = os.path.join(os.path.dirname(__file__), "Colors.xlsx")
+        DesignatedColors.Initialize(file)
 
 
     def testData(self):
@@ -34,10 +36,13 @@ class TestDesignatedColors(unittest.TestCase):
 
 
     def testPlot(self):
-        x, weight = FunctionGenerator.GetSineWave(magnitude=10, frequency=4, yOffset=0, slope=0, steps=1000)
-        x, torque = FunctionGenerator.GetSineWave(magnitude=4, frequency=2, yOffset=0, slope=10, steps=1000)
+        x, a = FunctionGenerator.GetSineWave(magnitude=10, frequency=4, yOffset=0, slope=0, steps=1000)
+        x, b = FunctionGenerator.GetSineWave(magnitude=4, frequency=2, yOffset=0, slope=10, steps=1000)
+        x, c = FunctionGenerator.GetSineWave(magnitude=5, frequency=3, yOffset=30, slope=-5, steps=1000)
 
-        self.Plot(x, [weight, torque], ["Weight on Bit", "Torque"])
+        # Show that order plotted doesn't change the colors.
+        self.Plot(x, [a, b, c], ["Category A", "Category C", "Not Valid"])
+        self.Plot(x, [b, a, c], ["Category C", "Category A", "Not Valid"])
 
 
     def Plot(self, xData, yData, yDataLabels):
@@ -47,12 +52,13 @@ class TestDesignatedColors(unittest.TestCase):
         figure = plt.gcf()
         axes   = plt.gca()
 
-        for y, label, column in zip(yData, yDataLabels, ["Weight on Bit", "Acceleration Z"]):
-            axes.plot(xData, y, label=label, color=self.designatedColors.colors.loc[column, 0])
+        colors = DesignatedColors.GetColors(yDataLabels)
+
+        for y, label, color in zip(yData, yDataLabels, colors):
+            axes.plot(xData, y, label=label, color=color)
             # axes.plot(xData, y, label=label, color=self.designatedColors.colors.loc[0, column])
             # axes.plot(xData, y, label=label, color=(76, 114, 176))
-
-
+        figure.legend()
         plt.show()
 
 
