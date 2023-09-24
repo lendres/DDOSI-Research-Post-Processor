@@ -41,8 +41,8 @@ class TestDesignatedColors(unittest.TestCase):
         x, c = FunctionGenerator.GetSineWave(magnitude=5, frequency=3, yOffset=30, slope=-5, steps=1000)
 
         # Show that order plotted doesn't change the colors.
-        self.Plot(x, [a, b, c], ["Category A", "Category C", "Not Valid"])
-        self.Plot(x, [b, a, c], ["Category C", "Category A", "Not Valid"])
+        self.Plot(x, [a, b, c], ["Category A", "Category C", "Doesn't Exist"])
+        self.Plot(x, [b, a, c], ["Category C", "Category A", "Doesn't Exist"])
 
 
     def Plot(self, xData, yData, yDataLabels):
@@ -56,10 +56,25 @@ class TestDesignatedColors(unittest.TestCase):
 
         for y, label, color in zip(yData, yDataLabels, colors):
             axes.plot(xData, y, label=label, color=color)
-            # axes.plot(xData, y, label=label, color=self.designatedColors.colors.loc[0, column])
-            # axes.plot(xData, y, label=label, color=(76, 114, 176))
         figure.legend()
         plt.show()
+
+
+    def testMultipleAxeses(self):
+        dataFrame = FunctionGenerator.GetMultipleSineWaveDataFrame()
+        dataFrame.rename({
+            "y0" : "Category C",
+            "y1" : "Category B"
+        })
+
+        # This function is a short cut for creating multiple Y axis plots.
+        yDataLabels = [["Category C"], ["Category B", "y2"], ["y3"]]
+        colors      = DesignatedColors.GetColors(yDataLabels)
+        print("Colors:", colors)
+        figure, axeses = PlotMaker.NewMultiYAxesPlot(dataFrame, "x", yDataLabels, color=colors)
+
+        # The AxesHelper can automatically label the axes if you supply it a list of strings for the y labels.
+        AxesHelper.Label(axeses, title="Multiple Y Axis Plot", xLabel="Time", yLabels=["Left", "Right 1", "Right 2"])
 
 
 if __name__ == "__main__":
