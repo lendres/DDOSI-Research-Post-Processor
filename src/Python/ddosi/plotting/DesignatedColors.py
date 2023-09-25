@@ -45,20 +45,19 @@ class DesignatedColors():
 
 
     @classmethod
-    def GetColors(cls, names:list):
+    def GetColors(cls, names:list|tuple):
         # Add a column to remember the active color.
         cls.colors["Active"] = 0
         cls.usedColors       = []
 
-        colors = cls._GetNamedColors(names)
-        print(colors)
+        colors = []
+        cls._GetNamedColors(colors, names)
         cls._FillRemainingColors(colors)
-        print(colors)
         return colors
 
 
     @classmethod
-    def _GetNamedColors(cls, item:str|list):
+    def _GetNamedColors(cls, colors:list, item:str|list|tuple):
 
         match item:
             case str():
@@ -68,13 +67,16 @@ class DesignatedColors():
                 if len(matches) > 0:
                     # Find the best match of the matches and return the color for that category.
                     category = max(matches, key=len)
-                    return cls._GetCategoryColor(category)
+                    colors.append(cls._GetCategoryColor(category))
                 else:
-                    return ""
+                    colors.append("")
 
-            case list():
-                colors = [cls._GetNamedColors(entry) for entry in item]
-                return colors
+            case list() | tuple():
+                for entry in item:
+                    cls._GetNamedColors(colors, entry)
+
+            case _:
+                raise Exception("Unknown object type in input colors.")
 
 
     @classmethod
@@ -92,14 +94,9 @@ class DesignatedColors():
 
     @classmethod
     def _FillRemainingColors(cls, colors):
-
         for i in range(len(colors)):
-            match colors[i]:
-                case str():
-                    if colors[i] == "":
-                        colors[i] = cls._GetNextColor()
-                case list():
-                    cls._FillRemainingColors(colors[i])
+            if colors[i] == "":
+                colors[i] = cls._GetNextColor()
 
 
     @classmethod
