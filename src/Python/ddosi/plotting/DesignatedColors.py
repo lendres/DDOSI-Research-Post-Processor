@@ -3,7 +3,6 @@ Created on February 17, 2023
 @author: Lance A. Endres
 """
 import pandas                                                        as pd
-from   PIL                                                           import ImageColor
 import os
 
 from   lendres.path.File                                             import File
@@ -13,7 +12,7 @@ from   lendres.plotting.PlotHelper                                   import Plot
 class DesignatedColors():
     colors          = None
     usedColors      = None
-    numberOfColors = 0
+    numberOfColors  = 0
 
 
     @classmethod
@@ -26,22 +25,6 @@ class DesignatedColors():
 
         cls.colors         = pd.read_excel(file, index_col=0)
         cls.numberOfColors = len(cls.colors.columns)
-        # cls._FillRows()
-
-
-    @classmethod
-    def _FillRows(cls):
-        columnRange = range(1, len(cls.colors.columns))
-
-        for i in range(len(cls.colors)):
-            lastColor = 0
-
-            for j in columnRange:
-                if pd.isna(cls.colors.iloc[i, j]):
-                    cls.colors.iloc[i, j] = cls.colors.iloc[i, lastColor]
-                else:
-                    cls.colors.iloc[i, j] =  cls.colors.iloc[i, j]
-                    lastColor = j
 
 
     @classmethod
