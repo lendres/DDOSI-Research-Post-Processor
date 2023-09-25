@@ -14,6 +14,7 @@ from   SegmentSignalPy                           import FindSignificantZones
 from   lendres.plotting.PlotHelper               import PlotHelper
 from   lendres.plotting.AxesHelper               import AxesHelper
 
+
 class SignificantZones():
     significantZonesIndices     = None
     xData                       = None
@@ -164,6 +165,7 @@ class SignificantZones():
                 horizontalalignment="center",                                  # Center text horizontally.
                 verticalalignment="top"                                        # Justify to top of text.
             )
+            # Remove the fill label so that only the first one shows up in the legend.
             label = None
 
 
