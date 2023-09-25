@@ -12,7 +12,7 @@ class Plots():
 
 
     @classmethod
-    def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, yAxisColumn:str="Depth", wobColumn:str="WOB", yUnits:str="cm", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
+    def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, yAxisColumn:str="Depth", wobColumn:str="Weight on Bit", yUnits:str="cm", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
         PlotHelper.scale      = 0.4
         PlotHelper.widthScale = 0.35
         figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)

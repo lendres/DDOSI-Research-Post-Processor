@@ -13,7 +13,7 @@ class Plots():
 
 
     @classmethod
-    def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="WOB", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
+    def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
         figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
 
         # Title and labels.
@@ -23,22 +23,22 @@ class Plots():
 
 
     @classmethod
-    def NewTobWobAndRpmPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="TOB", wobColumn:str="WOB", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, **kwargs):
+    def NewTobWobAndRpmPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="TOB", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, **kwargs):
         return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Torque (daN.m)", tobColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
     @classmethod
-    def NewRopWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", ropColumn:str="ROP", wobColumn:str="WOB", rpmColumn:str="Rotary Speed", title:str="Rate of Penetration", titleSuffix:str=None, **kwargs):
+    def NewRopWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", ropColumn:str="ROP", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Rate of Penetration", titleSuffix:str=None, **kwargs):
         return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Rate of Penetration (cm/s)", ropColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
     @classmethod
-    def NewDepthOfCutWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", depthOfCutColumn:str="Depth of Cut", wobColumn:str="WOB", rpmColumn:str="Rotary Speed", title:str="Depth of Cut", titleSuffix:str=None, **kwargs):
+    def NewDepthOfCutWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", depthOfCutColumn:str="Depth of Cut", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Depth of Cut", titleSuffix:str=None, **kwargs):
         return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Depth of Cut (cm/revolution)", depthOfCutColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
     @classmethod
-    def NewParameterWobAndRotarySpeedPlot(cls, title:str, data:pd.DataFrame, xAxisColumn:str, parameterLabel:str, parameterColumn:str, wobColumn:str="WOB", rpmColumn:str="Rotary Speed", titleSuffix:str=None, **kwargs):
+    def NewParameterWobAndRotarySpeedPlot(cls, title:str, data:pd.DataFrame, xAxisColumn:str, parameterLabel:str, parameterColumn:str, wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", titleSuffix:str=None, **kwargs):
         """
         Plots a parameter versus the weight on bit and rotary speed on a multi y-axes figure.  The parameter is read off of the left axis and the weight on bit and rotary speed
         have axes on the right side.
@@ -58,7 +58,7 @@ class Plots():
         parameterColumn : str
             The column name of the parameter to plot on the left axis.
         wobColumn : str, optional
-            The column name of the weight on bit. The default is "WOB".
+            The column name of the weight on bit. The default is "Weight on Bit".
         rpmColumn : str, optional
             The column name of the rotary speed. The default is "Rotary Speed".
         titleSuffix : str
@@ -82,11 +82,11 @@ class Plots():
 
 
     @classmethod
-    def NewThreeAxesWobAndRotarySpeedFigure(cls, title:str, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="WOB", rpmColumn:str="Rotary Speed", titleSuffix:str=None, **kwargs):
+    def NewThreeAxesWobAndRotarySpeedFigure(cls, title:str, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", titleSuffix:str=None, **kwargs):
         # Creates a figure with two axes having an aligned (shared) x-axis.
         figure, axeses = PlotHelper.NewMultiYAxesFigure(3)
 
-        PlotMaker.MultiAxesPlot(axeses[1:], data, xAxisColumn, [[wobColumn], [rpmColumn]], "x", colorCycle=None, **kwargs)
+        PlotMaker.MultiAxesPlot(axeses[1:], data, xAxisColumn, [[wobColumn], [rpmColumn]], "x", **kwargs)
 
         # Labels.
         AxesHelper.Label(axeses, title, "Time (s)", ["", "Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
