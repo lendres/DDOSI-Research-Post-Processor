@@ -16,9 +16,8 @@ from   lendres.plotting.AxesHelper               import AxesHelper
 
 
 class SignificantZones():
-    significantZonesIndices     = None
-    xData                       = None
 
+    
     def __init__(self, segmentationResults, xData=None):
         """
         Contructor.
@@ -35,8 +34,9 @@ class SignificantZones():
         -------
         None.
         """
-        self.results = segmentationResults
-        self.xData   = xData
+        self.results                    = segmentationResults
+        self.xData                      = xData
+        self.significantZonesIndices    = None
 
 
     def Copy(self, xData=None):
@@ -74,8 +74,24 @@ class SignificantZones():
         self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, self.xData, threshold, includeBoundaries)
 
 
-    def InvertSignificantZones(self, ignoreStart=False, ignoreEnd=False):
+    def InvertSignificantZones(self, ignoreStart:bool=False, ignoreEnd:bool=False):
+        """
+        Finds the inverse of the signficant zones.  Essentially, this creates significant zones out of the regions between significant zones.
+        
+        Often there are small insignificant zones at the start and end of the data set that are not of interest in the inverted zones.  These can
+        be ignored using the arguments.
 
+        Parameters
+        ----------
+        ignoreStart : bool, optional
+            An option to ignore the first zone in the inverted set.  This parameter only applies if the first signficant zone does not start at the first data value (index 0). The default is False.
+        ignoreEnd : bool, optional
+            An option to ignore the last zone in the inverted set.  This parameter only applies if the last signficant zone does not start at the last data value (last index). The default is False.
+
+        Returns
+        -------
+        None.
+        """
         newIndices = []
 
         firstIndex = (self.significantZonesIndices[0])[0]
@@ -126,8 +142,7 @@ class SignificantZones():
                 zones = [self.significantZonesIndices[zone] for zone in zones]
                 return [[self.xData[indexSet[0]], self.xData[indexSet[1]]] for indexSet in zones]
 
-
-            case default:
+            case _:
                 raise Exception("The parameters 'zones' is an unknown type.")
 
 
@@ -136,7 +151,7 @@ class SignificantZones():
         """
         Returns
         -------
-        int
+        : int
             The number of significant zones.
         """
         return len(self.significantZonesIndices)
