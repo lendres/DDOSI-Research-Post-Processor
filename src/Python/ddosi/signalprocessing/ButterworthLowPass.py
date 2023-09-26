@@ -15,6 +15,6 @@ def ButterworthLowPassFilter(data, cutOffFrequency, samplingFrequency, order):
     # Get the filter coefficients.
     # Analog is false because we are using regularly sampled data.
     b, a = butter(order, normalCutOff, btype="low", analog=False)
-    y    = filtfilt(b, a, data)
+    y    = filtfilt(b, a, data, method="gust")
 
     return y, b, a
