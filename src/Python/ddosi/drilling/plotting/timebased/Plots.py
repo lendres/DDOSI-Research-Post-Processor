@@ -2,11 +2,15 @@
 Created on March 15, 2023
 @author: Lance A. Endres
 """
-import pandas                                                        as pd
-import matplotlib.pyplot                                             as plt
-from   lendres.plotting.AxesHelper                                   import AxesHelper
-from   lendres.plotting.PlotHelper                                   import PlotHelper
-from   lendres.plotting.PlotMaker                                    import PlotMaker
+import pandas                                                             as pd
+import matplotlib.pyplot                                                  as plt
+
+from   lendres.plotting.AxesHelper                                        import AxesHelper
+from   lendres.plotting.PlotHelper                                        import PlotHelper
+from   lendres.plotting.PlotMaker                                         import PlotMaker
+from   lendres.algorithms.DataType                                        import DataType
+
+from   ddosi.plotting.DesignatedColors                                    import DesignatedColors
 
 
 class Plots():
@@ -14,7 +18,10 @@ class Plots():
 
     @classmethod
     def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
-        figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
+        yDataLabels = [[wobColumn], [rpmColumn]]
+        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+
+        figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
 
         # Title and labels.
         AxesHelper.Label(axeses, title, xAxisColumn+" (s)", ["Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
@@ -73,7 +80,10 @@ class Plots():
         axeses : tuple of matplotlib.axes.Axes
             The axes of the plot.
         """
-        figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, [[parameterColumn], [wobColumn], [rpmColumn]], **kwargs)
+        yDataLabels = [[parameterColumn], [wobColumn], [rpmColumn]]
+        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        
+        figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
 
         # Labels.
         AxesHelper.Label(axeses, title, "Time (s)", [parameterLabel, "Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
@@ -86,7 +96,9 @@ class Plots():
         # Creates a figure with two axes having an aligned (shared) x-axis.
         figure, axeses = PlotHelper.NewMultiYAxesFigure(3)
 
-        PlotMaker.MultiAxesPlot(axeses[1:], data, xAxisColumn, [[wobColumn], [rpmColumn]], "x", **kwargs)
+        yDataLabels = [[wobColumn], [rpmColumn]]
+        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        PlotMaker.MultiAxesPlot(axeses[1:], data, xAxisColumn, yDataLabels, "x", **kwargs)
 
         # Labels.
         AxesHelper.Label(axeses, title, "Time (s)", ["", "Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
@@ -99,8 +111,11 @@ class Plots():
         PlotHelper.Format()
         axes = plt.gca()
 
+        kwargs            = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, columns)
+        seriesKeyWordArgs = PlotHelper.ConvertKeyWordArgumentsToSeriesSets(DataType.GetLengthOfNestedObjects(columns), **kwargs)
+
         for i in range(len(columns)):
-            axes.plot(data["Time"], data[columns[i]], label=columns[i], color=PlotHelper.NextColor(), **kwargs)
+            axes.plot(data["Time"], data[columns[i]], label=columns[i], **(seriesKeyWordArgs[i]))
 
         AxesHelper.Label(axes, title, "Time (s)", "Acceleration (m/s^2)", titleSuffix=titleSuffix)
 
@@ -111,9 +126,11 @@ class Plots():
     def NewAccelerationPlot(cls, data:pd.DataFrame, column:str, colorIndex:int=0, title:str="Acceleration", titleSuffix:str=None, **kwargs):
         # Must be run before creating figure or plotting data.
         PlotHelper.Format()
+        
+        kwargs = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
 
         axes = plt.gca()
-        axes.plot(data["Time"], data[column], label=column, color=PlotHelper.GetColor(colorIndex), **kwargs)
+        axes.plot(data["Time"], data[column], label=column, **kwargs)
         AxesHelper.Label(axes, title, "Time (s)", "Acceleration (m/s^2)", titleSuffix=titleSuffix)
 
         return plt.gcf(), axes

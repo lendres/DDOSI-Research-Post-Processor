@@ -7,6 +7,8 @@ from   lendres.plotting.AxesHelper                                   import Axes
 from   lendres.plotting.PlotHelper                                   import PlotHelper
 from   lendres.plotting.PlotMaker                                    import PlotMaker
 
+from   ddosi.plotting.DesignatedColors                               import DesignatedColors
+
 
 class Plots():
 
@@ -15,7 +17,10 @@ class Plots():
     def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, yAxisColumn:str="Depth", wobColumn:str="Weight on Bit", yUnits:str="cm", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
         PlotHelper.scale      = 0.4
         PlotHelper.widthScale = 0.35
-        figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, [[wobColumn], [rpmColumn]], **kwargs)
+        
+        yDataLabels = [[wobColumn], [rpmColumn]]
+        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        figure, axes = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, yDataLabels, **kwargs)
 
         # Labels.
         AxesHelper.Label(axes[0], title, "Weight on Bit (tons)", yAxisColumn+" ("+yUnits+")", titleSuffix=titleSuffix)
