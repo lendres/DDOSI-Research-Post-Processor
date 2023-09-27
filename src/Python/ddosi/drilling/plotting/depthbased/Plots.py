@@ -4,6 +4,7 @@ Created on March 15, 2023
 """
 import pandas                                                        as pd
 import matplotlib.pyplot                                             as plt
+import matplotlib
 
 from   lendres.plotting.AxesHelper                                   import AxesHelper
 from   lendres.plotting.PlotHelper                                   import PlotHelper
@@ -112,21 +113,34 @@ class Plots():
         axeses : tuple of matplotlib.axes.Axes
             The axes of the plot.
         """
-        savedScales = [PlotHelper.widthScale, PlotHelper.heightScale]
-
-        PlotHelper.widthScale  = 0.68
-        PlotHelper.heightScale = 2.0
-
         yDataLabels    = [[wobColumn], [rpmColumn]]
 
         kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
         figure, axeses = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, yDataLabels, **kwargs)
 
-        # Labels.
+        cls.SetFigureSize(figure)
+
         AxesHelper.Label(axeses, title, ["Weight on Bit (tons)", "Revolutions per Minute"], yAxisColumn+" ("+yUnits+")", titleSuffix=titleSuffix)
+
+        # For depth based plots we want the smallest value at the top, so we need to reverse the axis limits.
         AxesHelper.ReverseYAxisLimits(axeses[0])
 
-        PlotHelper.widthScale  = savedScales[0]
-        PlotHelper.heightScale = savedScales[1]
-
         return figure, axeses
+
+
+    @classmethod
+    def SetFigureSize(self, figure:matplotlib.figure.Figure):
+        """
+        Set the figure size.
+
+        Parameters
+        ----------
+        figure : matplotlib.figure.Figure
+            The figure..
+
+        Returns
+        -------
+        None.
+        """
+        figure.set_figwidth(6.8)
+        figure.set_figheight(12)
