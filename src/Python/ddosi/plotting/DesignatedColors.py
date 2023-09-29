@@ -42,20 +42,25 @@ class DesignatedColors():
 
 
     @classmethod
-    def ApplyKeyWordArgumentsToColors(cls, kwargs, names:list|tuple):
-        defaultKwargs = {"color" : cls.GetColors(names)}
+    def GetColorsAsKeyWordArguments(cls, names:str|list|tuple):
+        return {"color" : cls.GetColors(names)}
+
+
+    @classmethod
+    def ApplyKeyWordArgumentsToColors(cls, kwargs, names:str|list|tuple):
+        defaultKwargs = cls.GetColorsAsKeyWordArguments(names)
         defaultKwargs.update(kwargs)
         return defaultKwargs
-        
+
 
     @classmethod
     def GetColors(cls, names:str|list|tuple):
         """
         Takes a list/tuple (or list of lists) of named values and converts them to a list of colors.
-        
+
         If any of the names are not found in the color map, a default color will be supplied.  The default colors are generated fromthe PlotHelper
         color cyle.
-        
+
         Color map lookups are done on a closest match basis.
             Example:
                 If name="Category A Sub 1 SubSub I"
@@ -79,7 +84,7 @@ class DesignatedColors():
         """
         if cls.colors is None:
             raise Exception("The DesignatedColors class has not been properly initialized.")
-            
+
         # Add a column to remember the active color.
         cls.colors["Active"] = 0
         cls.usedColors       = []
@@ -87,7 +92,7 @@ class DesignatedColors():
         colors = []
         cls._GetNamedColors(colors, names)
         cls._FillRemainingColors(colors)
-        
+
         if type(names) is str:
             return colors[0]
         else:
