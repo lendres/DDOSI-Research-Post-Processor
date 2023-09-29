@@ -17,7 +17,7 @@ from   lendres.plotting.AxesHelper               import AxesHelper
 
 class SignificantZones():
 
-    
+
     def __init__(self, segmentationResults, xData=None):
         """
         Contructor.
@@ -77,7 +77,7 @@ class SignificantZones():
     def InvertSignificantZones(self, ignoreStart:bool=False, ignoreEnd:bool=False):
         """
         Finds the inverse of the signficant zones.  Essentially, this creates significant zones out of the regions between significant zones.
-        
+
         Often there are small insignificant zones at the start and end of the data set that are not of interest in the inverted zones.  These can
         be ignored using the arguments.
 
@@ -157,20 +157,22 @@ class SignificantZones():
         return len(self.significantZonesIndices)
 
 
-    def PlotSignificantZones(self, axis, legendPrefix=""):
+    def PlotSignificantZones(self, axes, labelPrefix=None):
         if self.significantZonesIndices is None:
             raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
 
-        yData = AxesHelper.GetYBoundaries(axis)
+        yTop, yBottom = self._GetYBoundryLists(axes)
 
-        yBottom = [yData[0], yData[0]]
-        yTop    = [yData[1], yData[1]]
-
-        label = legendPrefix+" "+"Zone" if legendPrefix != "" else "Zone"
+        label = "Zone" if labelPrefix is None else labelPrefix+" "+"Zone"
 
         for zone, i in zip(self.GetZoneValues(), range(self.NumberOfSignificantZones)):
-            plt.fill_between(zone, yTop, yBottom, facecolor=(0,0,1,0.075), edgecolor=(0,0,1,0.30), label=label)
-            axis.annotate(
+            # Fill between two horizontal line segements.
+            # Top line: (zone[0], yTop) to (zone[1], yTop)
+            # Bottom line: (zone[0], yBttom) to (zone[1], yBottom)
+            patch = plt.fill_between(zone, yTop, yBottom, facecolor=(0,0,1,0.075), edgecolor=(0,0,1,0.30), label=label)
+            patch.zoneName = "Zone " + str(i)
+
+            axes.annotate(
                 i,
                 xy=(np.average(zone), yTop[0]),                                # Point to annotate (top center of fill).
                 xytext=(0, -3),                                                # Move text down a few points.
@@ -182,6 +184,28 @@ class SignificantZones():
             )
             # Remove the fill label so that only the first one shows up in the legend.
             label = None
+
+
+    def HighlightZones(self, zones, axes, label=None):
+        if self.significantZonesIndices is None:
+            raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
+
+        yTop, yBottom = self._GetYBoundryLists(axes)
+
+        label = "Highlighted Zone" if label is None else label
+
+        for zone in self.GetZoneValues(zones):
+            plt.fill_between(zone, yTop, yBottom, facecolor=(1,0.9,0.6,0.2), edgecolor=(1,0.63,0,1.0), label=label)
+
+            # Remove the fill label so that only the first one shows up in the label.
+            label = None
+
+
+    def _GetYBoundryLists(self, axes):
+        yData   = AxesHelper.GetYBoundaries(axes)
+        yBottom = [yData[0], yData[0]]
+        yTop    = [yData[1], yData[1]]
+        return yTop, yBottom
 
 
     def DropDataByZoneRange(self, data, xData, startZone, endZone, keep=False):
