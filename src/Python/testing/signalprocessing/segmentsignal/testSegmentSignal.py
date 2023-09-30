@@ -2,11 +2,12 @@
 Created on February 13, 2023
 @author: Lance A. Endres
 """
-import pandas                                    as pd
-import matplotlib.pyplot                         as plt
+import pandas                                                        as pd
+import matplotlib.pyplot                                             as plt
 
-from   signalprocessing.segmentsignal.SegmentSignal                  import SegmentSignal
-from   signalprocessing.segmentsignal.NoiseVarianceEstimateMethod    import NoiseVarianceEstimateMethod
+from   ddosi.signalprocessing.SegmentSignal                          import SegmentSignal
+from   ddosi.signalprocessing.NoiseVarianceEstimateMethod            import NoiseVarianceEstimateMethod
+from   ddosi.signalprocessing.SignificantZones                       import SignificantZones
 
 import unittest
 
@@ -41,15 +42,16 @@ class TestSegmentSignal(unittest.TestCase):
         names       = ["Depth", "Log", "SegmentedLog", "EventSequence", "FilteredLog"]
         cls.data   = pd.read_csv(cls.inputFile, sep="\t", header=None, names=names)
 
-        cls.segmenter = SegmentSignal()
+        cls.segmenter = SegmentSignal(cls.data["Depth"])
         cls.segmenter.Segment(cls.data["Log"], cls.f, cls.order, cls.order1, NoiseVarianceEstimateMethod.Point)
         cls.results = cls.segmenter.results
 
-        cls.segmenter.FindSignificantZones(cls.data["Depth"], 1.0, False)
+        cls.significantZones = SignificantZones(cls.segmenter.results, cls.segmenter.xData)
+        cls.significantZones.FindSignificantZones(1.0, includeBoundaries=False)
 
         # Large data set.
         cls.largeData           = pd.read_csv(cls.workingDirectory+"Large Data Set.txt", header=None, names=["Log"])
-        cls.largeDataSegmenter  = SegmentSignal()
+        cls.largeDataSegmenter  = SegmentSignal(range(len(cls.largeData["Log"])))
         cls.largeDataSegmenter.Segment(cls.largeData["Log"], 0.010, 2, 1, NoiseVarianceEstimateMethod.Smoothed, 300)
 
 
@@ -81,7 +83,7 @@ class TestSegmentSignal(unittest.TestCase):
         axis = plt.gca()
         axis.plot(x, self.results.FilteredSignal, color="red", label="Calculated Filtered Signal")
         axis.plot(x, self.data["FilteredLog"], label="Filtered Signal Solution", linestyle=(0, (5, 5)), linewidth=2)
-        self.segmenter.PlotBinaryEvents(axis, self.data["Depth"])
+        self.segmenter.PlotBinaryEvents(axis)
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
         axis.grid()
         plt.show()
@@ -89,8 +91,8 @@ class TestSegmentSignal(unittest.TestCase):
         axis = plt.gca()
         axis.plot(x, self.results.SegmentedLog, color="red", label="Calculated Segmented Signal")
         axis.plot(x, self.data["SegmentedLog"], label="Segmented Signal Solution", linestyle=(0, (5, 5)), linewidth=2)
-        self.segmenter.PlotBinaryEvents(axis, self.data["Depth"])
-        self.segmenter.PlotSignificantZones(axis, self.data["Depth"], 1.0, False)
+        self.segmenter.PlotBinaryEvents(axis)
+        self.significantZones.PlotZones(axis)
 
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
         axis.grid()
@@ -99,7 +101,7 @@ class TestSegmentSignal(unittest.TestCase):
 
     def testFindSignificantZonesIndices(self):
         solution   = [[9, 28], [30, 40], [42, 54], [56, 99]]
-        calculated = self.segmenter.significantZonesIndices
+        calculated =  self.significantZones.significantZonesIndices
 
         result     = (calculated == solution).all()
         self.assertTrue(result)
@@ -107,21 +109,25 @@ class TestSegmentSignal(unittest.TestCase):
 
     def testFindSignificantZonesValues(self):
         solution   = [[1898.75, 1895.86], [1895.55, 1894.03], [1893.72, 1891.89], [1891.59, 1885.04]]
-        calculated =  self.segmenter.significantZoneValues
+        calculated =  self.significantZones.GetZoneValues()
 
         result     = (calculated == solution)
         self.assertTrue(result)
 
 
     def testLargeDataSet(self):
-        x = range(len(self.largeData["Log"]))
+        x = self.largeDataSegmenter.xData
 
         axis = plt.gca()
         axis.plot(x, self.largeData["Log"], label="Log", linewidth=1.5)
         axis.plot(x, self.largeDataSegmenter.results.FilteredSignal, linewidth=1.0, color="red", label="Calculated Filtered Signal")
 
-        self.largeDataSegmenter.PlotSignificantZones(axis, x, 1850.0, False)
-        self.largeDataSegmenter.PlotBinaryEvents(axis, x)
+
+        significantZones = SignificantZones(self.largeDataSegmenter.results, self.largeDataSegmenter.xData)
+        significantZones.FindSignificantZones(1850.0, includeBoundaries=False)
+
+        significantZones.PlotZones(axis)
+        self.largeDataSegmenter.PlotBinaryEvents(axis)
 
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
         axis.grid()

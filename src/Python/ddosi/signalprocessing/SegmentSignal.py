@@ -2,23 +2,21 @@
 Created on February 14, 2023
 @author: Lance A. Endres
 """
-import numpy                                     as np
-import pandas                                    as pd
-import matplotlib.pyplot                         as plt
+import numpy                                                         as np
+import pandas                                                        as pd
 
-from itertools                                   import chain
+from   ddosi.signalprocessing.NoiseVarianceEstimateMethod            import NoiseVarianceEstimateMethod
 
-from   ddosi.signalprocessing.NoiseVarianceEstimateMethod                      import NoiseVarianceEstimateMethod
+from   SegmentSignalPy                                               import Segment                          as SegmentC
 
-from   SegmentSignalPy                           import Segment                as SegmentC
-from   SegmentSignalPy                           import SegmentationResults
-from   SegmentSignalPy                           import FindSignificantZones
+from   lendres.plotting.AxesHelper                                   import AxesHelper
 
-from   lendres.plotting.PlotHelper               import PlotHelper
 
 class SegmentSignal():
-    results                     = None
-    xData                       = None
+    """
+    Interface to Segment Signal algorithm.
+    """
+
 
     def __init__(self, xData=None):
         """
@@ -26,7 +24,6 @@ class SegmentSignal():
 
         Parameters
         ----------
-        dataFrame: Pandas DataFrame
         xData : array like or string
             The x-axis data.  Not required to segment, but is required for a lot of plotting and post processing.
             If "dataFrame" is provided, "xData" can be a string that is the column name of the x-axis data in the
@@ -36,7 +33,8 @@ class SegmentSignal():
         -------
         None.
         """
-        self.xData = xData
+        self.xData     = xData
+        self.results   = None
 
 
     def Segment(
@@ -125,7 +123,11 @@ class SegmentSignal():
         if self.xData is None:
             raise Exception("The x-axis data was not set.")
 
-        axis.plot(self.xData, self.results.FilteredSignal, color="cyan", label="Filtered Signal", **kwargs)
+        # Add the label and color width to the kwargs if they do not already exist in the dictionary.
+        kwargs.setdefault("label", "Filtered Signal")
+        kwargs.setdefault("color", "cyan")
+
+        axis.plot(self.xData, self.results.FilteredSignal, **kwargs)
 
 
     def PlotSegmentedSignal(self, axis, **kwargs):
@@ -146,10 +148,10 @@ class SegmentSignal():
         if self.xData is None:
             raise Exception("The x-axis data was not set.")
 
-        # It seems like we can't just pass two of the same keyword arguments (like "label") and have them automatically overwrite
-        # the first value.  So if we want to use defaults for label and color, while allowing them to be overwritten, we need to
-        # create a new dictionary and overwrite them in the process of creating it.
-        kwargs = {"label" : "Segmented Signal", "color" : "red", **kwargs}
+        # Add the label and color width to the kwargs if they do not already exist in the dictionary.
+        kwargs.setdefault("label", "Segmented Signal")
+        kwargs.setdefault("color", "red")
+
         axis.plot(self.xData, self.results.SegmentedLog, **kwargs)
 
 
@@ -168,14 +170,15 @@ class SegmentSignal():
         -------
         None.
         """
-        yData = PlotHelper.GetYBoundaries(axis)
+        yData = AxesHelper.GetYBoundaries(axis)
 
         label = "Segment Boundry"
 
+        # Add the color and line width to the kwargs if they do not already exist in the dictionary.
+        kwargs.setdefault("linewidth", 0.5)
+        kwargs.setdefault("color", "orchid")
+
         for i in range(self.results.SignalLength):
             if self.results.BinaryEventSequence[i]:
-                #"mediumvioletred"
-                kwargs.setdefault("linewidth", 0.5)
-                kwargs.setdefault("color", "orchid")
                 axis.plot([self.xData[i], self.xData[i]], yData, label=label, **kwargs)
                 label = None
