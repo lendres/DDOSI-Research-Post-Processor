@@ -82,7 +82,7 @@ class Plots():
         """
         yDataLabels = [[parameterColumn], [wobColumn], [rpmColumn]]
         kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
-        
+
         figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
 
         # Labels.
@@ -109,28 +109,32 @@ class Plots():
     @classmethod
     def NewCombinedAccelerationPlot(cls, data:pd.DataFrame, columns:list=["Acceleration X", "Acceleration Y", "Acceleration Z"], title:str="Accelerations", titleSuffix:str=None, **kwargs):
         PlotHelper.Format()
-        axes = plt.gca()
 
         kwargs            = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, columns)
         seriesKeyWordArgs = PlotHelper.ConvertKeyWordArgumentsToSeriesSets(DataType.GetLengthOfNestedObjects(columns), **kwargs)
+
+        figure = plt.gcf()
+        axes   = plt.gca()
 
         for i in range(len(columns)):
             axes.plot(data["Time"], data[columns[i]], label=columns[i], **(seriesKeyWordArgs[i]))
 
         AxesHelper.Label(axes, title, "Time (s)", "Acceleration (m/s^2)", titleSuffix=titleSuffix)
 
-        return plt.gcf(), axes
+        return figure, axes
 
 
     @classmethod
-    def NewAccelerationPlot(cls, data:pd.DataFrame, column:str, colorIndex:int=0, title:str="Acceleration", titleSuffix:str=None, **kwargs):
+    def NewAccelerationPlot(cls, data:pd.DataFrame, column:str, title:str="Acceleration", titleSuffix:str=None, **kwargs):
         # Must be run before creating figure or plotting data.
         PlotHelper.Format()
-        
+
         kwargs = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
 
-        axes = plt.gca()
+        figure = plt.gcf()
+        axes   = plt.gca()
+
         axes.plot(data["Time"], data[column], label=column, **kwargs)
         AxesHelper.Label(axes, title, "Time (s)", "Acceleration (m/s^2)", titleSuffix=titleSuffix)
 
-        return plt.gcf(), axes
+        return figure, axes
