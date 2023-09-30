@@ -2,17 +2,18 @@
 Created on February 14, 2023
 @author: Lance A. Endres
 """
-import numpy                                     as np
-import pandas                                    as pd
-import matplotlib.pyplot                         as plt
+import numpy                                                         as np
+import pandas                                                        as pd
+import matplotlib.pyplot                                             as plt
+import matplotlib
 
-from itertools                                   import chain
+from   itertools                                                     import chain
 
-from   SegmentSignalPy                           import SegmentationResults
-from   SegmentSignalPy                           import FindSignificantZones
+from   SegmentSignalPy                                               import SegmentationResults
+from   SegmentSignalPy                                               import FindSignificantZones
 
-from   lendres.plotting.PlotHelper               import PlotHelper
-from   lendres.plotting.AxesHelper               import AxesHelper
+from   lendres.plotting.AxesHelper                                   import AxesHelper
+from   lendres.plotting.PlotHelper                                   import PlotHelper
 
 
 class SignificantZones():
@@ -47,6 +48,17 @@ class SignificantZones():
             newSignificantZones.xData = xData
 
         return newSignificantZones
+
+
+    @property
+    def NumberOfZones(self):
+        """
+        Returns
+        -------
+        : int
+            The number of significant zones.
+        """
+        return len(self.significantZonesIndices)
 
 
     def FindSignificantZones(self, threshold:float, includeBoundaries:bool=False):
@@ -98,7 +110,7 @@ class SignificantZones():
         if firstIndex > 0 and not ignoreStart:
             newIndices.append([0, firstIndex])
 
-        numberOfZones = self.NumberOfSignificantZones
+        numberOfZones = self.NumberOfZones
 
         for i in range(numberOfZones-1):
             newIndices.append([(self.significantZonesIndices[i])[1], (self.significantZonesIndices[i+1])[0]])
@@ -146,35 +158,117 @@ class SignificantZones():
                 raise Exception("The parameters 'zones' is an unknown type.")
 
 
-    @property
-    def NumberOfSignificantZones(self):
+
+    def PlotZones(self, axes:matplotlib.axes.Axes, **kwargs):
         """
+        Plots the significant zones as shaded boxes and numbers them at the top.
+
+        A default label of "Zone" is applied if none is specified.
+
+        Parameters
+        ----------
+        axes : matplotlib.axes.Axes
+            The axis of the plot.
+        **kwargs : keyword arguments
+            Keyword arguments passed to the fill_between plotting function.
+
         Returns
         -------
-        : int
-            The number of significant zones.
+        None.
         """
-        return len(self.significantZonesIndices)
+        # Add default kwargs if they do not already exist in the dictionary.
+        kwargs.setdefault("label", "Zone")
+        kwargs.setdefault("facecolor", (0,0,1,0.075))
+        kwargs.setdefault("edgecolor", (0,0,1,0.30))
+
+        self._PlotZoneBoundaries(axes, **kwargs)
+        self._AnnotateZones(axes)
 
 
-    def PlotSignificantZones(self, axes, labelPrefix=None):
+    def HighlightZones(self, axes:matplotlib.axes.Axes, zones:list, **kwargs):
+        """
+        Highlights the specified zones in an alternate color.
+
+        Parameters
+        ----------
+        axes : matplotlib.axes.Axes
+            The axis of the plot.
+        zones : list
+            Zone numbers to highlight.
+        **kwargs : keyword arguments
+            Keyword arguments passed to the fill_between plotting function.
+
+        Returns
+        -------
+        None.
+        """
+        # Add default kwargs if they do not already exist in the dictionary.
+        kwargs.setdefault("label", "Highlighted Zone")
+        kwargs.setdefault("facecolor", (1,0.9,0.6,0.2))
+        kwargs.setdefault("edgecolor", (1,0.63,0,1.0))
+
+        self._PlotZoneBoundaries(axes, zones, **kwargs)
+
+
+    def _PlotZoneBoundaries(self, axes:matplotlib.axes.Axes, zones:list=None, **kwargs):
+        """
+        Plots the specified zones as shaded boxes.  The face and edge color for the fill must be specified in the keyword arguments.
+
+        Parameters
+        ----------
+        axes : matplotlib.axes.Axes
+            The axis of the plot.
+        zones : list, optional
+            Zone numbers to plot.  If None, all the zones are plotted.  The default is None.
+        **kwargs : keyword arguments
+            Keyword arguments passed to the fill_between plotting function.
+
+        Returns
+        -------
+        None.
+        """
         if self.significantZonesIndices is None:
             raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
 
         yTop, yBottom = self._GetYBoundryLists(axes)
 
-        label = "Zone" if labelPrefix is None else labelPrefix+" "+"Zone"
+        if zones is None:
+            zones = list(range(self.NumberOfZones))
 
-        for zone, i in zip(self.GetZoneValues(), range(self.NumberOfSignificantZones)):
-            # Fill between two horizontal line segements.
+        for zone, i in zip(self.GetZoneValues(zones), zones):
+            # Fill between two horizontal line segements.  The x data is used for both curves.
             # Top line: (zone[0], yTop) to (zone[1], yTop)
             # Bottom line: (zone[0], yBttom) to (zone[1], yBottom)
-            patch = plt.fill_between(zone, yTop, yBottom, facecolor=(0,0,1,0.075), edgecolor=(0,0,1,0.30), label=label)
+            patch = plt.fill_between(zone, yTop, yBottom, **kwargs)
+
+            # Provide a name so we can find the patch later if needed.
             patch.zoneName = "Zone " + str(i)
 
+            # Remove the fill label so that only the first one shows up in the legend.
+            kwargs["label"] = None
+
+
+    def _AnnotateZones(self, axes:matplotlib.axes.Axes):
+        """
+        Numbers each zone at the top center of the zone.
+
+        Parameters
+        ----------
+        axes : matplotlib.axes.Axes
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+        """
+        # Get the top of the y axis.
+        yPosition = (AxesHelper.GetYBoundaries(axes))[1]
+
+        for zone, i in zip(self.GetZoneValues(), range(self.NumberOfZones)):
+            # Number the zone at the top, inside, center of the zone.
             axes.annotate(
                 i,
-                xy=(np.average(zone), yTop[0]),                                # Point to annotate (top center of fill).
+                xy=(np.average(zone), yPosition),                              # Point to annotate (top center of fill).
                 xytext=(0, -3),                                                # Move text down a few points.
                 textcoords="offset points",                                    # Specifies that xytext is in points.
                 size=0.5*PlotHelper.GetScaledAnnotationSize(),                 # Font size.
@@ -182,26 +276,24 @@ class SignificantZones():
                 horizontalalignment="center",                                  # Center text horizontally.
                 verticalalignment="top"                                        # Justify to top of text.
             )
-            # Remove the fill label so that only the first one shows up in the legend.
-            label = None
 
 
-    def HighlightZones(self, zones, axes, label=None):
-        if self.significantZonesIndices is None:
-            raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
+    def _GetYBoundryLists(self, axes:matplotlib.axes.Axes):
+        """
+        Gets the top and bottom boundries of the axes in a format suitable for plotting with the "fill_between" function.
 
-        yTop, yBottom = self._GetYBoundryLists(axes)
+        Parameters
+        ----------
+        axes : matplotlib.axes.Axes
+            The axes to get the boundaries from..
 
-        label = "Highlighted Zone" if label is None else label
-
-        for zone in self.GetZoneValues(zones):
-            plt.fill_between(zone, yTop, yBottom, facecolor=(1,0.9,0.6,0.2), edgecolor=(1,0.63,0,1.0), label=label)
-
-            # Remove the fill label so that only the first one shows up in the label.
-            label = None
-
-
-    def _GetYBoundryLists(self, axes):
+        Returns
+        -------
+        yTop : list
+            The top value as a list.
+        yBottom : list
+            The bottom value as a list.
+        """
         yData   = AxesHelper.GetYBoundaries(axes)
         yBottom = [yData[0], yData[0]]
         yTop    = [yData[1], yData[1]]
