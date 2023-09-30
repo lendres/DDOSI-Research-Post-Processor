@@ -5,9 +5,13 @@ Created on February 13, 2023
 import pandas                                                        as pd
 import matplotlib.pyplot                                             as plt
 
+import os
+
 from   ddosi.signalprocessing.SegmentSignal                          import SegmentSignal
 from   ddosi.signalprocessing.NoiseVarianceEstimateMethod            import NoiseVarianceEstimateMethod
 from   ddosi.signalprocessing.SignificantZones                       import SignificantZones
+
+from   lendres.path.File                                             import File
 
 import unittest
 
@@ -44,7 +48,6 @@ class TestSegmentSignal(unittest.TestCase):
 
         cls.segmenter = SegmentSignal(cls.data["Depth"])
         cls.segmenter.Segment(cls.data["Log"], cls.f, cls.order, cls.order1, NoiseVarianceEstimateMethod.Point)
-        cls.results = cls.segmenter.results
 
         cls.significantZones = SignificantZones(cls.segmenter.results, cls.segmenter.xData)
         cls.significantZones.FindSignificantZones(1.0, includeBoundaries=False)
@@ -63,15 +66,15 @@ class TestSegmentSignal(unittest.TestCase):
 
 
     def testScalarResults(self):
-        self.assertAlmostEqual(self.results.SegmentDensity, self.d_solution, places=5)
+        self.assertAlmostEqual(self.segmenter.results.SegmentDensity, self.d_solution, places=5)
         # The variance of the jump sequence is not correct.  The reason is unknown.  See "SegmentSignalUnitTests.cs".
         #self.assertAlmostEqual(results.JumpSequenceVariance, self.c_solution, places=3)
 
 
     def testArrayResults(self):
         delta = 0.3
-        for i in range(self.results.SignalLength):
-            self.assertAlmostEqual(self.results.SegmentedLog[i], self.data["SegmentedLog"].loc[i], delta=delta)
+        for i in range(self.segmenter.results.SignalLength):
+            self.assertAlmostEqual(self.segmenter.results.SegmentedLog[i], self.data["SegmentedLog"].loc[i], delta=delta)
             #self.assertAlmostEqual(results.FilteredSignal[i], self.data["FilteredLog"].loc[i], delta=delta)
 
 
@@ -81,7 +84,7 @@ class TestSegmentSignal(unittest.TestCase):
         x = self.data["Depth"]
 
         axis = plt.gca()
-        axis.plot(x, self.results.FilteredSignal, color="red", label="Calculated Filtered Signal")
+        axis.plot(x, self.segmenter.results.FilteredSignal, color="red", label="Calculated Filtered Signal")
         axis.plot(x, self.data["FilteredLog"], label="Filtered Signal Solution", linestyle=(0, (5, 5)), linewidth=2)
         self.segmenter.PlotBinaryEvents(axis)
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
@@ -89,7 +92,7 @@ class TestSegmentSignal(unittest.TestCase):
         plt.show()
 
         axis = plt.gca()
-        axis.plot(x, self.results.SegmentedLog, color="red", label="Calculated Segmented Signal")
+        axis.plot(x, self.segmenter.results.SegmentedLog, color="red", label="Calculated Segmented Signal")
         axis.plot(x, self.data["SegmentedLog"], label="Segmented Signal Solution", linestyle=(0, (5, 5)), linewidth=2)
         self.segmenter.PlotBinaryEvents(axis)
         self.significantZones.PlotZones(axis)
@@ -133,6 +136,19 @@ class TestSegmentSignal(unittest.TestCase):
         axis.grid()
         plt.show()
 
+
+    def testSerialization(self):
+        path = os.path.join(File.GetDirectory(__file__), "test.pickle")
+
+        self.significantZones.Serialize(path)
+        deserializedObject = SignificantZones.Deserialize(path)
+        os.remove(path)
+
+        solution   = [[9, 28], [30, 40], [42, 54], [56, 99]]
+        calculated =  deserializedObject.significantZonesIndices
+
+        result     = (calculated == solution).all()
+        self.assertTrue(result)
 
 
 if __name__ == "__main__":

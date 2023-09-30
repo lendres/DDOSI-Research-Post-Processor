@@ -8,6 +8,7 @@ import matplotlib.pyplot                                             as plt
 import matplotlib
 
 from   itertools                                                     import chain
+import pickle
 
 from   SegmentSignalPy                                               import SegmentationResults
 from   SegmentSignalPy                                               import FindSignificantZones
@@ -156,7 +157,6 @@ class SignificantZones():
 
             case _:
                 raise Exception("The parameters 'zones' is an unknown type.")
-
 
 
     def PlotZones(self, axes:matplotlib.axes.Axes, **kwargs):
@@ -502,3 +502,24 @@ class SignificantZones():
         # Generate new data as a subset of the old.
         dataSubset = data.drop(dropIndices, inplace=False).reset_index()
         return dataSubset
+
+
+    def Serialize(self, path):
+        if not path.endswith(".pickle"):
+            path += ".pickle"
+        # The "wb" argument opens the file in binary mode.
+        with open(path, "wb") as outputFile:
+            pickle.dump(self, outputFile)
+
+
+    @classmethod
+    def Deserialize(cls, path):
+        deserializedObject = None
+
+        with open(path, "rb") as inputFile:
+            deserializedObject = pickle.load(inputFile)
+
+        if deserializedObject is None:
+            raise Exception("The deserialization failed.")
+
+        return deserializedObject
