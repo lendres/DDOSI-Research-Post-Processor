@@ -44,7 +44,7 @@ class PreProcessing():
 
 
     @classmethod
-    def CalculateDepthOfCutFromRopAndRpm(cls, data, ropColumn="ROP", rpmColumn="Rotary Speed"):
+    def CalculateDepthOfCutFromRopAndRotarySpeed(cls, data, ropColumn="ROP", rpmColumn="Rotary Speed"):
         """
         Calculates the depth of cut from the rate of penetration and revolutions per minute.
 
