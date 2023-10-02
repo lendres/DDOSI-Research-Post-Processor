@@ -58,13 +58,11 @@ class Plots():
         -------
         figure : matplotlib.figure.Figure
             The newly created figure.
-        axeses : tuple of matplotlib.axes.Axes
-            The axes of the plot.
         """
         figure, axeses = cls.NewWobAndRotarySpeedPlot(data, yAxisColumn, wobColumn, yUnits, rpmColumn, title, titleSuffix, **kwargs)
         LegendHelper.CreateLegendAtFigureBottom(figure, axeses[0], offset=0.15*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
         plt.show()
-        return figure, axeses
+        return figure
 
 
     @classmethod
@@ -136,13 +134,11 @@ class Plots():
         -------
         figure : matplotlib.figure.Figure
             The newly created figure.
-        axeses : tuple of matplotlib.axes.Axes
-            The axes of the plot.
         """
         figure, axeses = cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, parameterLabel, parameterColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
-        LegendHelper.CreateLegendAtFigureBottom(figure, axeses[0], offset=0.02*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
+        LegendHelper.CreateLegendAtFigureBottom(figure, axeses[0], offset=0.15*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
         plt.show()
-        return figure, axeses
+        return figure
 
 
     @classmethod
@@ -223,6 +219,14 @@ class Plots():
         AxesHelper.Label(axes, title, "Time (s)", "Acceleration (m/s^2)", titleSuffix=titleSuffix)
 
         return figure, axes
+
+
+    @classmethod
+    def CreateNewAccelerationPlot(cls, data:pd.DataFrame, column:str, title:str="Acceleration", titleSuffix:str=None, legendOptions:LegendOptions=LegendOptions(), **kwargs):
+        figure, axes= cls.NewAccelerationPlot(data, column, title, titleSuffix, **kwargs)
+        LegendHelper.CreateLegendAtFigureBottom(figure, axes, offset=0.15*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
+        plt.show()
+        return figure
 
 
     @classmethod
