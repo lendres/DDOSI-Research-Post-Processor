@@ -12,6 +12,8 @@ from   ddosi.signalprocessing.NoiseVarianceEstimateMethod            import Nois
 from   ddosi.signalprocessing.SignificantZones                       import SignificantZones
 
 from   lendres.path.File                                             import File
+from   lendres.plotting.PlotHelper                                   import PlotHelper
+from   lendres.plotting.FormatSettings                               import FormatSettings
 
 import unittest
 
@@ -54,8 +56,15 @@ class TestSegmentSignal(unittest.TestCase):
 
         # Large data set.
         cls.largeData           = pd.read_csv(cls.workingDirectory+"Large Data Set.txt", header=None, names=["Log"])
+        cls.largeData.reset_index(inplace=True, names="x")
         cls.largeDataSegmenter  = SegmentSignal(range(len(cls.largeData["Log"])))
-        cls.largeDataSegmenter.Segment(cls.largeData["Log"], 0.010, 2, 1, NoiseVarianceEstimateMethod.Smoothed, 300)
+        cls.largeDataSegmenter.Segment(cls.largeData["Log"], 3.0, 20, 10, NoiseVarianceEstimateMethod.Smoothed)
+        cls.largeDataZones      = SignificantZones(cls.largeDataSegmenter.results, cls.largeDataSegmenter.xData)
+        cls.largeDataZones.FindSignificantZones(4000.0, includeBoundaries=False)
+
+        # Make plots look better.
+        PlotHelper.PushSettings(annotationSize=22, scale=0.9)
+        PlotHelper.Format()
 
 
     def setUp(self):
@@ -88,7 +97,7 @@ class TestSegmentSignal(unittest.TestCase):
         axis.plot(x, self.data["FilteredLog"], label="Filtered Signal Solution", linestyle=(0, (5, 5)), linewidth=2)
         self.segmenter.PlotBinaryEvents(axis)
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
-        axis.grid()
+        axis.set(title="Generate Plots 1")
         plt.show()
 
         axis = plt.gca()
@@ -96,9 +105,8 @@ class TestSegmentSignal(unittest.TestCase):
         axis.plot(x, self.data["SegmentedLog"], label="Segmented Signal Solution", linestyle=(0, (5, 5)), linewidth=2)
         self.segmenter.PlotBinaryEvents(axis)
         self.significantZones.PlotZones(axis)
-
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
-        axis.grid()
+        axis.set(title="Generate Plots 2")
         plt.show()
 
 
@@ -119,21 +127,15 @@ class TestSegmentSignal(unittest.TestCase):
 
 
     def testLargeDataSet(self):
-        x = self.largeDataSegmenter.xData
-
         axis = plt.gca()
-        axis.plot(x, self.largeData["Log"], label="Log", linewidth=1.5)
-        axis.plot(x, self.largeDataSegmenter.results.FilteredSignal, linewidth=1.0, color="red", label="Calculated Filtered Signal")
+        axis.plot(self.largeData["x"], self.largeData["Log"], label="Log", linewidth=1.5)
+        axis.plot(self.largeData["x"], self.largeDataSegmenter.results.FilteredSignal, linewidth=1.0, color="red", label="Calculated Filtered Signal")
 
-
-        significantZones = SignificantZones(self.largeDataSegmenter.results, self.largeDataSegmenter.xData)
-        significantZones.FindSignificantZones(1850.0, includeBoundaries=False)
-
-        significantZones.PlotZones(axis)
+        self.largeDataZones.PlotZones(axis)
         self.largeDataSegmenter.PlotBinaryEvents(axis)
 
         axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
-        axis.grid()
+        axis.set(title="Large Data Set")
         plt.show()
 
 
@@ -149,6 +151,27 @@ class TestSegmentSignal(unittest.TestCase):
 
         result     = (calculated == solution).all()
         self.assertTrue(result)
+
+
+    def testDataExtraction(self):
+        data = self.largeDataZones.ExtractDataByZones(self.largeData, list(range(6)))
+        self.PlotExtractData(data, "Extracted Data by Zone")
+
+        data = self.largeDataZones.ExtractDataByValues(self.largeData, "x", list(range(6)))
+        self.PlotExtractData(data, "Extracted Data by Value")
+
+
+    def PlotExtractData(self, data, title):
+        axis = plt.gca()
+        axis.plot(data["x"], data["Log"], label="Extracted Data", linestyle='None', marker="o", markersize=6)
+        axis.set(title=title)
+        axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
+        plt.show()
+
+
+    @classmethod
+    def tearDownClass(cls):
+        PlotHelper.PopSettings()
 
 
 if __name__ == "__main__":

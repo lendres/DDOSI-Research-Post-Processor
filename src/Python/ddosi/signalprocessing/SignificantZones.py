@@ -87,7 +87,7 @@ class SignificantZones():
         self.significantZonesIndices = FindSignificantZones(self.results.BinaryEventSequence, self.xData, threshold, includeBoundaries)
 
 
-    def InvertSignificantZones(self, ignoreStart:bool=False, ignoreEnd:bool=False):
+    def InvertZones(self, ignoreStart:bool=False, ignoreEnd:bool=False):
         """
         Finds the inverse of the signficant zones.  Essentially, this creates significant zones out of the regions between significant zones.
 
@@ -185,7 +185,7 @@ class SignificantZones():
         self._AnnotateZones(axes)
 
 
-    def HighlightZones(self, axes:matplotlib.axes.Axes, zones:list, **kwargs):
+    def HighlightZones(self, axes:matplotlib.axes.Axes, zones:int|list, **kwargs):
         """
         Highlights the specified zones in an alternate color.
 
@@ -210,7 +210,7 @@ class SignificantZones():
         self._PlotZoneBoundaries(axes, zones, **kwargs)
 
 
-    def _PlotZoneBoundaries(self, axes:matplotlib.axes.Axes, zones:list=None, **kwargs):
+    def _PlotZoneBoundaries(self, axes:matplotlib.axes.Axes, zones:int|list=None, **kwargs):
         """
         Plots the specified zones as shaded boxes.  The face and edge color for the fill must be specified in the keyword arguments.
 
@@ -234,6 +234,9 @@ class SignificantZones():
 
         if zones is None:
             zones = list(range(self.NumberOfZones))
+
+        if type(zones) is int:
+            zones = [zones]
 
         for zone, i in zip(self.GetZoneValues(zones), zones):
             # Fill between two horizontal line segements.  The x data is used for both curves.
@@ -300,7 +303,30 @@ class SignificantZones():
         return yTop, yBottom
 
 
-    def DropDataByZoneRange(self, data, xData, startZone, endZone, keep=False):
+    def DropDataByZoneRange(self, data:pd.DataFrame, xData:str|np.ndarray|pd.core.series.Series, startZone:int, endZone:int, keep:bool=False):
+        """
+        Creates a new data set by dropping data.  The data range to drop/keep is specified by the start and end zones.
+
+        If keep is true, the data in the range startZone-endZone is kept,  If it is False, this data is dropped and the remaining data is kept.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The original data.
+        xData : str|np.ndarray|pd.core.series.Series
+            The x-axis data.  If a string is provided, the data is assumed to be a column in data.
+        startZone : int
+            The start zone.
+        endZone : int
+            The end zone.
+        keep : bool, optional
+            Specified is the . The default is False.
+
+        Returns
+        -------
+        dataSubset : pd.DataFrame
+            A subset of the original data.
+        """
         if self.significantZonesIndices is None:
             raise Exception("There are no indices.  Run \"FindSignificantZones\" first.")
 
@@ -326,12 +352,15 @@ class SignificantZones():
         dataSubset = data.drop(dropIndices, inplace=False).reset_index()
 
         # Update the x-axis data.  This must be done after the data has been updated to make sure we get the new, reduced data.
-        if type(xData) == str:
-            self.xData = dataSubset[xData]
-        elif type(xData) is np.ndarray:
-            self.xData = np.delete(xData, dropIndices)
-        elif type(xData) == pd.core.series.Series:
-            self.xData = xData.drop(dropIndices, inplace=False).reset_index()
+        match xData:
+            case str():
+                self.xData = dataSubset[xData]
+            case np.ndarray():
+                self.xData = np.delete(xData, dropIndices)
+            case pd.core.series.Series():
+                self.xData = xData.drop(dropIndices, inplace=False).reset_index()
+            case _:
+                raise Exception("Unknown data type for xData.")
 
         return dataSubset
 
@@ -481,7 +510,22 @@ class SignificantZones():
         return newSignificantZones
 
 
-    def ExtractDataByZones(self, data, zones):
+    def ExtractDataByZones(self, data:pd.DataFrame, zones:int|list):
+        """
+        Extract the data for the specified zones.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The original data set.
+        zones : int|list
+            The zone(s) to extract data from.
+
+        Returns
+        -------
+        dataSubset : pandas.DataFrame
+            The extracted data.
+        """
         keepIndices = []
 
         # Allow for input of a single zone by converting it to a list so the loop below works.
@@ -495,16 +539,39 @@ class SignificantZones():
 
             keepIndices = list(chain(keepIndices, range(startIndex, endIndex)))
 
-        # Start with a list of all the indices and remove the ones we are keeping to generate a list of dropped indices.
-        allIndices  = range(data.shape[0])
-        dropIndices = [i for i in allIndices if i not in keepIndices]
-
-        # Generate new data as a subset of the old.
-        dataSubset = data.drop(dropIndices, inplace=False).reset_index()
-        return dataSubset
+        return  data.iloc[keepIndices]
 
 
-    def Serialize(self, path):
+    def ExtractDataByValues(self, data:pd.DataFrame, independentDataColumn, zones):
+        # Allow for input of a single zone by converting it to a list so the loop below works.
+        if type(zones) is not list:
+            zones = [zones]
+
+        zoneValues = self.GetZoneValues(zones)
+
+        # Default/initialize all indices as False.
+        keepIndices = [False] * len(data[independentDataColumn])
+
+        for values in zoneValues:
+            keepIndices = keepIndices | ((data[independentDataColumn]>values[0]) & (data[independentDataColumn]<values[1]))
+
+        return data[keepIndices]
+
+
+
+    def Serialize(self, path:str):
+        """
+        Serialize (pickle) the object to a file.
+
+        Parameters
+        ----------
+        path : str
+            The path to write the object to.
+
+        Returns
+        -------
+        None.
+        """
         if not path.endswith(".pickle"):
             path += ".pickle"
         # The "wb" argument opens the file in binary mode.
@@ -513,7 +580,20 @@ class SignificantZones():
 
 
     @classmethod
-    def Deserialize(cls, path):
+    def Deserialize(cls, path:str):
+        """
+        Deserialize (unpickle) an object from a file.
+
+        Parameters
+        ----------
+        path : str
+            The path to read from.
+
+        Returns
+        -------
+        deserializedObject : SignificantZones
+            The deserialized SignificantZones.
+        """
         deserializedObject = None
 
         with open(path, "rb") as inputFile:
