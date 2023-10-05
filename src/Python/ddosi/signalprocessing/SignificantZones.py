@@ -181,8 +181,8 @@ class SignificantZones():
         kwargs.setdefault("facecolor", (0,0,1,0.075))
         kwargs.setdefault("edgecolor", (0,0,1,0.30))
 
-        self._PlotZoneBoundaries(axes, **kwargs)
-        self._AnnotateZones(axes)
+        yValues = self._PlotZoneBoundaries(axes, **kwargs)
+        self._AnnotateZones(axes, yValues[0])
 
 
     def HighlightZones(self, axes:matplotlib.axes.Axes, zones:int|list, **kwargs):
@@ -250,23 +250,23 @@ class SignificantZones():
             # Remove the fill label so that only the first one shows up in the legend.
             kwargs["label"] = None
 
+        return [yTop[0], yBottom[0]]
 
-    def _AnnotateZones(self, axes:matplotlib.axes.Axes):
+
+    def _AnnotateZones(self, axes:matplotlib.axes.Axes, yPosition:float):
         """
         Numbers each zone at the top center of the zone.
 
         Parameters
         ----------
         axes : matplotlib.axes.Axes
-            DESCRIPTION.
+            The axis of the plot.
+        yPosition : Vertical position to place the labels.
 
         Returns
         -------
         None.
         """
-        # Get the top of the y axis.
-        yPosition = (AxesHelper.GetYBoundaries(axes))[1]
-
         for zone, i in zip(self.GetZoneValues(), range(self.NumberOfZones)):
             # Number the zone at the top, inside, center of the zone.
             axes.annotate(
@@ -421,6 +421,11 @@ class SignificantZones():
         Creates one zone out of everything between the start zone and the end zone.  This includes any intermediate zones and any data that was otherwise excluded.  Saves
         the new set of zone indices to self.
 
+        If zones is a list it takes the form of [startZone, endZone].
+
+        If zones is a list of lists, each sub list is treated as a set of zones to merge.  E.g., [[startZone1, endZone1], [startZone2, endZone2]].  In this case,
+        zones should be ordered from lowest numbered zones to highest numbered zones.
+
         Parameters
         ----------
         zones : list
@@ -430,9 +435,35 @@ class SignificantZones():
         -------
         None.
         """
-        if len(zones) < 1:
+        # Make sure an argument was provided and it is not an empty list.
+        if not zones:
             return
 
+        match zones[0]:
+            case int():
+                self._MergeZones(zones)
+            case list():
+                # Loop zones in backward order, otherwise the zone numbers won't match the input.
+                for zoneSet in reversed(zones):
+                    self._MergeZones(zoneSet)
+            case _:
+                raise Exception("Unknown argument type provided to MergeZones.")
+
+
+    def _MergeZones(self, zones:list):
+        """
+        Creates one zone out of everything between the start zone and the end zone.  This includes any intermediate zones and any data that was otherwise excluded.  Saves
+        the new set of zone indices to self.
+
+        Parameters
+        ----------
+        zones : list
+            The start zone and end zone indices.
+
+        Returns
+        -------
+        None.
+        """
         newIndices = []
         startZone  = zones[0]
         i          = 0
@@ -550,7 +581,7 @@ class SignificantZones():
         zoneValues = self.GetZoneValues(zones)
 
         # Default/initialize all indices as False.
-        keepIndices = [False] * len(data[independentDataColumn])
+        keepIndices = np.array([False] * len(data[independentDataColumn]))
 
         for values in zoneValues:
             keepIndices = keepIndices | ((data[independentDataColumn]>values[0]) & (data[independentDataColumn]<values[1]))
