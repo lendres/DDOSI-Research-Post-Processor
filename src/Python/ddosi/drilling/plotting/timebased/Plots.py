@@ -18,7 +18,7 @@ from   ddosi.plotting.DesignatedColors                               import Desi
 class Plots():
 
     @classmethod
-    def CreateWobAndRotarySpeedPlot(cls, data:pd.DataFrame, yAxisColumn:str="Depth", yUnits:str="cm", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, legendOptions:LegendOptions=LegendOptions(), **kwargs):
+    def CreateWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, legendOptions:LegendOptions=LegendOptions(), **kwargs):
         """
         Creates a time based weight on bit and rotary speed plot.  The weight on bit and rotary speed are plotted on their own axes.  If specified,
         a legend is generated.  The plot is finalized.
@@ -29,8 +29,8 @@ class Plots():
         ----------
         data : pd.DataFrame
             The data.
-        yAxisColumn : str, optional
-            The column name of the time data to use as the y-axis values. The default is "Depth".
+        xAxisColumn : str, optional
+            The column name of the time data to use as the x-axis values. The default is "Time".
         wobColumn : str, optional
             The column name of the weight on bit data. The default is "Weight on Bit".
         rpmColumn : str, optional
@@ -59,7 +59,7 @@ class Plots():
         figure : matplotlib.figure.Figure
             The newly created figure.
         """
-        figure, axeses = cls.NewWobAndRotarySpeedPlot(data, yAxisColumn, wobColumn, yUnits, rpmColumn, title, titleSuffix, **kwargs)
+        figure, axeses = cls.NewWobAndRotarySpeedPlot(data, xAxisColumn, wobColumn, rpmColumn, title, titleSuffix, **kwargs)
         LegendHelper.CreateLegendAtFigureBottom(figure, axeses[0], offset=0.15*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
         plt.show()
         return figure
@@ -79,15 +79,15 @@ class Plots():
 
 
     @classmethod
-    def CreateTobWobAndRpmPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="Torque on Bit", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, legendOptions:LegendOptions=LegendOptions(), **kwargs):
-        figure, axeses = cls.NewTobWobAndRpmPlot(data, xAxisColumn, tobColumn, wobColumn, rpmColumn, title, titleSuffix, **kwargs)
+    def CreateTobWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="Torque on Bit", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, legendOptions:LegendOptions=LegendOptions(), **kwargs):
+        figure, axeses = cls.NewTobWobAndRotarySpeedPlot(data, xAxisColumn, tobColumn, wobColumn, rpmColumn, title, titleSuffix, **kwargs)
         LegendHelper.CreateLegendAtFigureBottom(figure, axeses[0], offset=0.15*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
         plt.show()
-        return figure, axeses
+        return figure
 
 
     @classmethod
-    def NewTobWobAndRpmPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="Torque on Bit", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, **kwargs):
+    def NewTobWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="Torque on Bit", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, **kwargs):
         return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Torque (daN.m)", tobColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
