@@ -10,7 +10,7 @@ from   lendres.plotting.PlotHelper                                   import Plot
 from   lendres.plotting.PlotMaker                                    import PlotMaker
 from   lendres.plotting.LegendHelper                                 import LegendHelper
 from   lendres.plotting.LegendOptions                                import LegendOptions
-from   lendres.algorithms.DataType                                   import DataType
+from   lendres.datatypes.ListTools                                   import ListTools
 
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
 
@@ -208,7 +208,7 @@ class Plots():
         PlotHelper.Format()
 
         kwargs            = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, columns)
-        seriesKeyWordArgs = PlotHelper.ConvertKeyWordArgumentsToSeriesSets(DataType.GetLengthOfNestedObjects(columns), **kwargs)
+        seriesKeyWordArgs = PlotHelper.ConvertKeyWordArgumentsToSeriesSets(ListTools.GetLengthOfNestedObjects(columns), **kwargs)
 
         figure = plt.gcf()
         axes   = plt.gca()

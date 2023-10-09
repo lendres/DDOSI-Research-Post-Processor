@@ -10,7 +10,6 @@ from   lendres.plotting.PlotHelper                                   import Plot
 from   lendres.plotting.PlotMaker                                    import PlotMaker
 from   lendres.plotting.LegendHelper                                 import LegendHelper
 from   lendres.plotting.LegendOptions                                import LegendOptions
-from   lendres.algorithms.DataType                                   import DataType
 
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
 
