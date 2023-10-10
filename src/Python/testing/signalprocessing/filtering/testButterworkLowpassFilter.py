@@ -3,11 +3,11 @@ Created on February 17, 2023
 @author: Lance A. Endres
 """
 
-from   scipy.signal                              import freqz
+from   scipy.signal                                                  import freqz
 
-import numpy                                     as np
-import pandas                                    as pd
-import matplotlib.pyplot                         as plt
+import numpy                                                         as np
+import pandas                                                        as pd
+import matplotlib.pyplot                                             as plt
 
 from   ddosi.signalprocessing.ButterworthLowPass                     import ButterworthLowPassFilter
 
@@ -29,20 +29,20 @@ class testButterworthLowPassFilter(unittest.TestCase):
         pass
 
 
-    def testButterworkLowpassFileter(self):
+    def testButterworkLowpassFilter(self):
         # Filter requirements.
         order                = 6
-        samplingFrequency    = 30.0   # sample rate, Hz
-        cutOff               = 3.667  # desired cutoff frequency of the filter, Hz
+        samplingFrequency    = 30.0   # Sample rate, Hz.
+        cutOff               = 3.667  # Desired cutoff frequency of the filter, Hz.
 
         # Demonstrate the use of the filter.
         # First make some data to be filtered.
-        T = 5.0         # seconds
-        n = int(T * samplingFrequency) # total number of samples
-        t = np.linspace(0, T, n, endpoint=False)
-        # "Noisy" data.  We want to recover the 1.2 Hz signal from this.
-        data = np.sin(1.2*2*np.pi*t) + 1.5*np.cos(9*2*np.pi*t) + 0.5*np.sin(12.0*2*np.pi*t)
+        totalTime       = 5.0
+        numberOfSamples = int(totalTime*samplingFrequency)
+        time            = np.linspace(0, totalTime, numberOfSamples, endpoint=False)
 
+        # "Noisy" data.  We want to recover the 1.2 Hz signal from this.
+        data = np.sin(1.2*2*np.pi*time) + 1.5*np.cos(9*2*np.pi*time) + 0.5*np.sin(12.0*2*np.pi*time)
 
         # Get the filter coefficients so we can check its frequency response.
         y, b, a = ButterworthLowPassFilter(data, cutOff, samplingFrequency, order)
@@ -60,20 +60,14 @@ class testButterworthLowPassFilter(unittest.TestCase):
 
         # Filter the data, and plot both the original and filtered signals.
         plt.subplot(2, 1, 2)
-        plt.plot(t, data, 'b-', label='data')
-        plt.plot(t, y, 'g-', linewidth=2, label='filtered data')
+        plt.plot(time, data, 'b-', label='data')
+        plt.plot(time, y, 'g-', linewidth=2, label='filtered data')
         plt.xlabel('Time [sec]')
-        plt.grid()
-        plt.legend()
 
-        plt.subplots_adjust(hspace=0.35)
+        plt.grid(True)
+        plt.legend()
         plt.show()
 
-
-        #self.assertAlmostEqual(self.results.SegmentDensity, self.d_solution, places=5)
-
-        # axis.legend(loc="lower right", bbox_to_anchor=(1, 0), bbox_transform=axis.transAxes)
-        # axis.grid()
 
 
 
