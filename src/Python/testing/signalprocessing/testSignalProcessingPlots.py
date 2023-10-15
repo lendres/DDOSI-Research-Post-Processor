@@ -63,17 +63,25 @@ class testSignalProcessingPlots(unittest.TestCase):
         Example from:
             https://analyticsindiamag.com/hands-on-tutorial-on-visualizing-spectrograms-in-python/
         """
-        samplingFrequency = 10e3
-        N = 1e5
         # NFFT = 1024
-        amplitude = 2 * np.sqrt(2)
-        noisePower = 0.01 * samplingFrequency / 2
-        time = np.arange(N) / float(samplingFrequency)
-        mod = 500*np.cos(2*np.pi*0.25*time)
-        carrier = amplitude * np.sin(2*np.pi*3e3*time + mod)
-        noise = np.random.normal(scale=np.sqrt(noisePower), size=time.shape)
-        noise *= np.exp(-time/5)
-        y = carrier + noise
+        samplingFrequency = 10e3
+        numberOfPoints    = 1e5
+
+        time              =  np.arange(numberOfPoints) / float(samplingFrequency)
+
+
+        lowFrequencySignal  = 500*np.cos(2*np.pi*0.25*time)
+
+        amplitude           =  2 * np.sqrt(2)
+        carrier             =  amplitude * np.sin(2*np.pi*3e3*time + lowFrequencySignal)
+
+        carrier             =  amplitude * carrier
+
+        noisePower          =  0.01 * samplingFrequency / 2
+        noise               =  np.random.normal(scale=np.sqrt(noisePower), size=time.shape)
+        noise               *= np.exp(-time/5)
+
+        y                   =  carrier + noise
 
         dataFrame = pd.DataFrame({"x" : time, "y" : y})
 
