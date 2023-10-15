@@ -64,17 +64,16 @@ class testSignalProcessingPlots(unittest.TestCase):
             https://analyticsindiamag.com/hands-on-tutorial-on-visualizing-spectrograms-in-python/
         """
         # NFFT = 1024
-        samplingFrequency = 10e3
-        numberOfPoints    = 1e5
+        samplingFrequency   = 10e3
+        numberOfPoints      = 1e5
 
-        time              =  np.arange(numberOfPoints) / float(samplingFrequency)
+        time                =  np.arange(numberOfPoints) / float(samplingFrequency)
 
-
+        # The low frequency signal with a period of 4 seconds (prevents having a dominate signal at 0 Hz).
         lowFrequencySignal  = 500*np.cos(2*np.pi*0.25*time)
 
         amplitude           =  2 * np.sqrt(2)
         carrier             =  amplitude * np.sin(2*np.pi*3e3*time + lowFrequencySignal)
-
         carrier             =  amplitude * carrier
 
         noisePower          =  0.01 * samplingFrequency / 2
