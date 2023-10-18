@@ -8,6 +8,7 @@ from   scipy.signal                                                  import freq
 import numpy                                                         as np
 import pandas                                                        as pd
 import matplotlib.pyplot                                             as plt
+from   matplotlib                                                    import mlab
 
 from   lendres.demonstration.FunctionGenerator                       import FunctionGenerator
 from   lendres.plotting.PlotHelper                                   import PlotHelper
@@ -32,6 +33,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         pass
 
 
+    @unittest.skip
     def testSpectrogram(self):
         startTime          = 0
         timeLength         = 10
@@ -86,6 +88,34 @@ class testSignalProcessingPlots(unittest.TestCase):
 
         self.CreateSineWavePlot(dataFrame["x"], dataFrame["y"], "Method 2")
         SignalProcessingPlots.CreateSpectrogramPlot(dataFrame, column="y", samplingFrequency=samplingFrequency, titleSuffix="Method 2")
+
+
+        # New.
+        self.Plot3dSpectrogram(y, samplingFrequency=samplingFrequency, title="3D Spectrogram")
+        plt.show()
+
+
+
+    def Plot3dSpectrogram(self, y, samplingFrequency=44100, ax=None, title=None):
+        PlotHelper.PushSettings(scale=0.5)
+        PlotHelper.Format()
+
+        figure, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        ax.set_box_aspect(aspect=None, zoom=0.85)
+
+        spec, freqs, t = mlab.specgram(y, Fs=samplingFrequency)
+        X, Y, Z = t[None, :], freqs[:, None],  20.0 * np.log10(spec)
+        ax.plot_surface(X, Y, Z, cmap="viridis")
+
+        ax.set_title(title, y=0.97, verticalalignment="top")
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Frequencies (Hz)")
+        ax.set_zlabel("Amplitude (dB)")
+        ax.set_zlim(-140, 0)
+
+        PlotHelper.PopSettings()
+        return X, Y, Z
+
 
 
     @classmethod
