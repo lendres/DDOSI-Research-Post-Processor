@@ -2,6 +2,7 @@
 Created on March 15, 2023
 @author: Lance A. Endres
 """
+import pandas                                                        as pd
 from   ddosi.signalprocessing.ButterworthLowPass                     import ButterworthLowPassFilter
 
 class SignalProcessing():
@@ -82,7 +83,7 @@ class SignalProcessing():
             rootMeanSquare.fillna(rootMeanSquare[numberOfPoints], inplace=True)
 
             columnName       = column + " " + suffix
-            data[columnName] = rootMeanSquare
+            data[columnName] = rootMeanSquare.astype(data[column].dtype)
             newNames.append(columnName)
         return newNames, suffix
 
@@ -119,6 +120,6 @@ class SignalProcessing():
         for column in columns:
             filteredData, b, a = ButterworthLowPassFilter(data[column], cutOff, samplingFrequency, order)
             columnName         = column + " " + suffix
-            data[columnName]   = filteredData
+            data[columnName]   = pd.Series(filteredData, dtype=data[column].dtype)
             newNames.append(columnName)
         return newNames, suffix
