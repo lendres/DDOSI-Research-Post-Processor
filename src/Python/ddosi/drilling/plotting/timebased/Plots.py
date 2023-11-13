@@ -92,7 +92,7 @@ class Plots():
 
 
     @classmethod
-    def NewRopWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", ropColumn:str="ROP", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Rate of Penetration", titleSuffix:str=None, **kwargs):
+    def NewRopWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", ropColumn:str="Rate of Penetration", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Rate of Penetration", titleSuffix:str=None, **kwargs):
         return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Rate of Penetration (cm/s)", ropColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 

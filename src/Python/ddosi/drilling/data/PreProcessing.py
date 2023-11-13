@@ -25,26 +25,19 @@ class PreProcessing():
         None.
 
         """
-        time  = data[timeColumn]
-        depth = data[depthColumn]
+        rateOfPenetration = data[depthColumn].diff() / data[timeColumn].diff()
 
-        # Insert a zero as a temporary place holder.
-        rateOfPenetration   = [0]
-
-        for i in range(1, len(time)):
-            rateOfPenetration.append((depth[i] - depth[i-1]) / (time[i] - time[i-1]))
-
-        # To calculate ROP, we need intervals of distance and time so we end up with one less entry for
-        # ROP than either of those data sets.  The first entry is back filled with the same value as the
-        # second entry to make them the same length.  Repeating an entry is better than adding a zero because
-        # plots that use a starting value of zero create a big spike and look funny.
+        # To calculate ROP, we need intervals of distance and time so we end up with one less entry for the ROP
+        # than either of those data sets and Pandas fills this in with nan.  The first entry is back filled with the
+        # same value as the second entry to make them the same length.  Repeating an entry is better than adding a
+        # zero because plots that use a starting value of zero create a big spike and look funny.
         rateOfPenetration[0] = rateOfPenetration[1]
 
-        data["ROP"] = rateOfPenetration
+        data["Rate of Penetration"] = rateOfPenetration
 
 
     @classmethod
-    def CalculateDepthOfCutFromRopAndRotarySpeed(cls, data, ropColumn="ROP", rpmColumn="Rotary Speed"):
+    def CalculateDepthOfCutFromRopAndRotarySpeed(cls, data, ropColumn="Rate of Penetration", rpmColumn="Rotary Speed"):
         """
         Calculates the depth of cut from the rate of penetration and revolutions per minute.
 
@@ -53,7 +46,7 @@ class PreProcessing():
         data : pandas.DataFrame
             Data in a pandas.DataFrame
         ropColumn : string, optional
-            The column name of the rate of penetration data. The default is "ROP".
+            The column name of the rate of penetration data. The default is "Rate of Penetration".
         rpmColumn : string, optional
             The column name of the angular velocity data. The default is "Rotary Speed".
 
