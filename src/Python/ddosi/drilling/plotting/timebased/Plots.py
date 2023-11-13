@@ -80,7 +80,9 @@ class Plots():
         figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
 
         # Title and labels.
-        AxesHelper.Label(axeses, title, xAxisColumn+" (s)", ["Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
+        xLabels = AxesHelper.AddUnitsSuffix(xAxisColumn, data[xAxisColumn])
+        yLabels = AxesHelper.AddUnitsSuffix(["Weight on Bit", "Rotary Speed"], data[["Weight on Bit", "Rotary Speed"]])
+        AxesHelper.Label(axeses, title, xLabels, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
 
@@ -223,7 +225,9 @@ class Plots():
         for i in range(len(columns)):
             axes.plot(data["Time"].values.quantity.m, data[columns[i]].values.quantity.m, label=columns[i], **(seriesKeyWordArgs[i]))
 
-        AxesHelper.LabelWithUnits(axes, title, "Time", data["Time"], "Acceleration", data[columns[0]], titleSuffix=titleSuffix)
+        xLabels = AxesHelper.AddUnitsSuffix("Time", data["Time"])
+        yLabels = AxesHelper.AddUnitsSuffix("Acceleration", data[columns[0]])
+        AxesHelper.Label(axes, title, xLabels, yLabels, titleSuffix=titleSuffix)
 
         return figure, axes
 
@@ -247,6 +251,9 @@ class Plots():
         axes   = plt.gca()
 
         axes.plot(data["Time"].values.quantity.m, data[column].values.quantity.m, label=column, **kwargs)
-        AxesHelper.LabelWithUnits(axes, title, "Time", data["Time"], "Acceleration", data[column], titleSuffix=titleSuffix)
+
+        xLabels = AxesHelper.AddUnitsSuffix("Time", data["Time"])
+        yLabels = AxesHelper.AddUnitsSuffix("Acceleration", data[column])
+        AxesHelper.Label(axes, title, xLabels, yLabels, titleSuffix=titleSuffix)
 
         return figure, axes
