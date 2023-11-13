@@ -14,6 +14,12 @@ from   lendres.datatypes.ListTools                                   import List
 
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
 
+import pint
+import pint_pandas
+
+from pint import UnitRegistry
+ureg = UnitRegistry()
+
 
 class Plots():
 
@@ -66,6 +72,7 @@ class Plots():
 
 
     @classmethod
+    # @ureg.wraps((None, None), (None, None, None, None, None, None, None, None), False)
     def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
         yDataLabels = [[wobColumn], [rpmColumn]]
         kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)

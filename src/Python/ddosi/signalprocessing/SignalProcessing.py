@@ -118,7 +118,7 @@ class SignalProcessing():
         suffix   = str(cutOff) + " Hz Lowpass Filtered"
 
         for column in columns:
-            filteredData, b, a = ButterworthLowPassFilter(data[column], cutOff, samplingFrequency, order)
+            filteredData, b, a = ButterworthLowPassFilter(data[column].values.quantity.m, cutOff, samplingFrequency, order)
             columnName         = column + " " + suffix
             data[columnName]   = pd.Series(filteredData, dtype=data[column].dtype)
             newNames.append(columnName)
