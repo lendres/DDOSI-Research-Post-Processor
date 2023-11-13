@@ -44,7 +44,7 @@ class SignalProcessing():
             movingAverage.fillna(movingAverage[numberOfPoints], inplace=True)
 
             columnName       = column + " " + suffix
-            data[columnName] = movingAverage
+            data[columnName] = movingAverage.astype(data[column].dtype)
             newNames.append(columnName)
         return newNames, suffix
 
