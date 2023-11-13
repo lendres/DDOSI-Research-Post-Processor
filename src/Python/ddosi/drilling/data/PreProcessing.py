@@ -33,11 +33,11 @@ class PreProcessing():
         # zero because plots that use a starting value of zero create a big spike and look funny.
         rateOfPenetration[0] = rateOfPenetration[1]
 
-        data["ROP"] = rateOfPenetration
+        data["Rate of Penetration"] = rateOfPenetration
 
 
     @classmethod
-    def CalculateDepthOfCutFromRopAndRotarySpeed(cls, data, ropColumn="ROP", rpmColumn="Rotary Speed"):
+    def CalculateDepthOfCutFromRopAndRotarySpeed(cls, data, ropColumn="Rate of Penetration", rpmColumn="Rotary Speed"):
         """
         Calculates the depth of cut from the rate of penetration and revolutions per minute.
 
@@ -46,7 +46,7 @@ class PreProcessing():
         data : pandas.DataFrame
             Data in a pandas.DataFrame
         ropColumn : string, optional
-            The column name of the rate of penetration data. The default is "ROP".
+            The column name of the rate of penetration data. The default is "Rate of Penetration".
         rpmColumn : string, optional
             The column name of the angular velocity data. The default is "Rotary Speed".
 
