@@ -88,7 +88,7 @@ class SignalProcessing():
 
 
     @classmethod
-    def LowPlassFilter(cls, data, columns, cutOff, samplingFrequency, order=2):
+    def LowPassFilter(cls, data, columns, cutOff, samplingFrequency, order=2):
         """
         Creeates low pass output for each column specified in "columns".  The low pass data is added to the DataFrame as a new
         column.  The new column name is the original column name with a suffix added that indicates the cut off frequency.
