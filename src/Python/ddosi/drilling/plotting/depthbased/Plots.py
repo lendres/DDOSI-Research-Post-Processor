@@ -59,13 +59,11 @@ class Plots():
         -------
         figure : matplotlib.figure.Figure
             The newly created figure.
-        axeses : tuple of matplotlib.axes.Axes
-            The axes of the plot.
         """
         figure, axeses = cls.NewWobAndRotarySpeedPlot(data, yAxisColumn, wobColumn, yUnits, rpmColumn, title, titleSuffix, **kwargs)
         LegendHelper.CreateLegendAtFigureBottom(figure, axeses[0], offset=0.02*PlotHelper.GetSettings().Scale, legendOptions=legendOptions)
         plt.show()
-        return figure, axeses
+        return figure
 
 
     @classmethod
