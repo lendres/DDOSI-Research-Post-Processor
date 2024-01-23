@@ -18,14 +18,18 @@ from   ddosi.plotting.DesignatedColors                               import Desi
 
 class Plots():
     @classmethod
-    def CreatePowerSpectralDensityWithFrequencyIndicatorsPlot(cls, data, column, samplingFrequency, frequencys, frequencyLabels, titleSuffix, **kwargs):
+    def CreatePowerSpectralDensityWithFrequencyIndicatorsPlot(cls, data, column, samplingFrequency, frequencys, frequencyLabels, fikwargs=[{}], titleSuffix=None, labelPeaks=True, **kwargs):
         """
         Creates a power spectral density plot with designated frequencies indicated as vertical lines.
         """
-        figure, axes = cls.NewPowerSpectralDensityPlot(data, column, samplingFrequency, titleSuffix, **kwargs)
+        figure, axes = cls.NewPowerSpectralDensityPlot(data, column, samplingFrequency, titleSuffix, labelPeaks=labelPeaks, **kwargs)
 
-        for frequency, label in zip(frequencys, frequencyLabels):
-            kwargsFrequency = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, label)
+        for frequency, label, frequencyKwargs in zip(frequencys, frequencyLabels, fikwargs):
+            # Apply designated colors, if the color exists.
+            kwargsFrequency = DesignatedColors.ApplyKeyWordArgumentsToColors(frequencyKwargs, label)
+            # Provide a default dashed line.  We don't want to override specified line styles though, so we check first.
+            if not "linestyle" in kwargsFrequency:
+                kwargsFrequency.update({"linestyle" : (0, (4, 6))})
             axes.axvline(frequency, **kwargsFrequency, label=label)
 
         legend = LegendHelper.CreateLegendAtFigureBottom(figure, axes, offset=0.15)
@@ -36,11 +40,11 @@ class Plots():
 
 
     @classmethod
-    def CreatePowerSpectralDensityPlot(cls, data, column, samplingFrequency, titleSuffix, **kwargs):
+    def CreatePowerSpectralDensityPlot(cls, data, column, samplingFrequency, titleSuffix=None, labelPeaks=True, **kwargs):
         """
         Creates a power spectral density plot and finalizes it.
         """
-        figure, axes = cls.NewPowerSpectralDensityPlot(data, column, samplingFrequency, titleSuffix, **kwargs)
+        figure, axes = cls.NewPowerSpectralDensityPlot(data, column, samplingFrequency, titleSuffix, labelPeaks=labelPeaks, **kwargs)
         legend = LegendHelper.CreateLegendAtFigureBottom(figure, axes, offset=0.15)
         LegendHelper.SetLegendLineWidths(legend, 4)
 
@@ -49,7 +53,7 @@ class Plots():
 
 
     @classmethod
-    def NewPowerSpectralDensityPlot(cls, data, column, samplingFrequency, titleSuffix, **kwargs):
+    def NewPowerSpectralDensityPlot(cls, data, column, samplingFrequency, titleSuffix=None, labelPeaks=True, **kwargs):
         """
         Does the main work of making a power spectral density plot.
         """
@@ -61,23 +65,24 @@ class Plots():
         Pxx, frequencies = plt.psd(data[column], Fs=samplingFrequency, label=column, **kwargs)
         AxesHelper.Label(axes, "Power Spectral Density of Accelerations", xLabels="Frequency", yLabels="Power Spectral Density (dB/Hz)", titleSuffix=titleSuffix)
 
+        if labelPeaks:
+            # The plotted line on the PSD is different than the returned values.  We need to scale the retuned values by the same
+            # method as the plotted line was.
+            # We then find the peaks.  The indices of the peaks are the first firsted value from find_peaks.
+            plotPxx = 10*np.log10(Pxx)
+            peaks   = find_peaks(plotPxx, distance=5)
+            peaks   = peaks[0]
 
-        plotPxx = 10*np.log10(Pxx)
-        # axes.plot(frequencies, plotPxx+4, "r--")
-        # print("Plot Pxx", plotPxx)
-        peaks = find_peaks(plotPxx, distance=5)
-        peaks = peaks[0]
-        print(peaks)
-        for peak in peaks:
-            # print("Peak:", peak)
-            axes.annotate("{0:.0f}".format(frequencies[peak]), (frequencies[peak], plotPxx[peak]),
-                size=0.6*PlotHelper.GetScaledAnnotationSize(),                 # Font size.
-                fontweight="bold",
-                xytext=(0, 3),                                                 # Move text up a few points.
-                textcoords="offset points",                                    # Specifies that xytext is in points.
-                horizontalalignment="center",                                  # Center text horizontally.
-                verticalalignment="bottom"                                     # Justify to top of text.
-)
+            # Now we annotate the plot.
+            for peak in peaks:
+                axes.annotate("{0:.0f}".format(frequencies[peak]), (frequencies[peak], plotPxx[peak]),
+                    size=0.6*PlotHelper.GetScaledAnnotationSize(),                 # Font size.
+                    fontweight="bold",                                             # Font weight.
+                    xytext=(0, 3),                                                 # Move text up a few points so it doesn't touch the curve.
+                    textcoords="offset points",                                    # Specifies that xytext is in points.
+                    horizontalalignment="center",                                  # Center text horizontally.
+                    verticalalignment="bottom"                                     # Justify to bottom of text.  We annotate above the curve.
+                )
 
         return figure, axes
 
@@ -87,8 +92,6 @@ class Plots():
         PlotHelper.Format()
         dataWidthPercent = 0.965
         figure, (dataAxes, colorBarAxes) = plt.subplots(1, 2, width_ratios=(dataWidthPercent, 1-dataWidthPercent))
-        # figure = plt.gcf()
-        # axes   = plt.gca()
 
         spectrum, frequencies, times, image = dataAxes.specgram(data[column], Fs=samplingFrequency, **kwargs)
 

@@ -5,7 +5,7 @@ Created on February 17, 2023
 import pandas                                                        as pd
 import os
 
-from   lendres.path.File                                             import File
+from   lendres.path.Path                                             import Path
 from   lendres.plotting.PlotHelper                                   import PlotHelper
 
 
@@ -32,10 +32,10 @@ class DesignatedColors():
         None.
         """
         if file is None:
-            file = os.path.join(File.GetDirectory(__file__), "Colors.xlsx")
+            file = os.path.join(Path.GetDirectory(__file__), "Colors.xlsx")
 
-        if not File.ContainsDirectory(file):
-            file = os.path.join(File.GetDirectory(__file__), file)
+        if not Path.ContainsDirectory(file):
+            file = os.path.join(Path.GetDirectory(__file__), file)
 
         cls.colors         = pd.read_excel(file, index_col=0)
         cls.numberOfColors = len(cls.colors.columns)
