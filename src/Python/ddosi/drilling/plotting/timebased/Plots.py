@@ -77,6 +77,8 @@ class Plots():
         yDataLabels = [[wobColumn], [rpmColumn]]
         kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
 
+        data = cls.ConvertOutput(data, xAxisColumn, yDataLabels)
+
         figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
 
         # Title and labels.
@@ -85,6 +87,13 @@ class Plots():
         AxesHelper.Label(axeses, title, xLabels, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
+
+    @classmethod
+    def ConvertOutput(cls, data, xAxisColumn, yDataColumns):
+        columns = ListTools.Flatten([xAxisColumn, yDataColumns])
+        convertedData = data[columns]
+        convertedData["Weight on Bit"] = convertedData["Weight on Bit"].pint.to("kg")
+        return convertedData
 
 
     @classmethod
