@@ -83,7 +83,7 @@ class Plots():
 
         # Title and labels.
         xLabels = AxesHelper.AddUnitsSuffix(xAxisColumn, data[xAxisColumn])
-        yLabels = AxesHelper.AddUnitsSuffix(["Weight on Bit", "Rotary Speed"], data[["Weight on Bit", "Rotary Speed"]])
+        yLabels = AxesHelper.AddUnitsSuffix([wobColumn, rpmColumn], data[[wobColumn, rpmColumn]])
         AxesHelper.Label(axeses, title, xLabels, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
@@ -92,7 +92,10 @@ class Plots():
     def ConvertOutput(cls, data, xAxisColumn, yDataColumns):
         columns = ListTools.Flatten([xAxisColumn, yDataColumns])
         convertedData = data[columns]
-        convertedData["Weight on Bit"] = convertedData["Weight on Bit"].pint.to("kg")
+        print("\n\nColumns:", columns)
+        yColumn = (yDataColumns[0])[0]
+        print("Y column 0:", yColumn)
+        convertedData[yColumn] = convertedData[yColumn].pint.to("kg")
         return convertedData
 
 
