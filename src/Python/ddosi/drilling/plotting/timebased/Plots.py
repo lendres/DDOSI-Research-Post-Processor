@@ -88,6 +88,7 @@ class Plots():
 
         return figure, axeses
 
+
     @classmethod
     def ConvertOutput(cls, data, xAxisColumn, yDataColumns):
         columns = ListTools.Flatten([xAxisColumn, yDataColumns])
