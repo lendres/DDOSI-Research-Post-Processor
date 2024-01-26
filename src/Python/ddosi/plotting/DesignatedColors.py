@@ -37,6 +37,7 @@ class DesignatedColors():
         if not Path.ContainsDirectory(file):
             file = os.path.join(Path.GetDirectory(__file__), file)
 
+        # The first column are row labels and we indicate that by using "indoex_col=0".
         cls.colors         = pd.read_excel(file, index_col=0)
         cls.numberOfColors = len(cls.colors.columns)
 
