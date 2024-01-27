@@ -39,7 +39,7 @@ class Units():
 
 
     @classmethod
-    def ConvertOutput(cls, data:pd.DataFrame, xAxisColumn:str, yDataColumns:list):
+    def ConvertOutput(cls, data:pd.DataFrame, independentAxisColumn:str, dependentAxisColumn:list):
         """
         Converts the specified columns to the output units and returns the data and labels with units applied.
 
@@ -47,34 +47,34 @@ class Units():
         ----------
         data : pandas.DataFrame
             DESCRIPTION.
-        xAxisColumn : str
+        independentAxisColumn : str
             The column name of the independent data.
-        yDataColumns : list of str
+        dependentAxisColumn : list of str
             The column names for the dependent data.
 
         Returns
         -------
         convertedData : pandas.DataFrame
             The converted data.
-        xLabel : str
-            The x-axis label with the output units appended.
-        yLabels : TYPE
-            The y-axis labels with the output units appended.
+        independentAxisUnits : str
+            The dependent axis output units.
+        dependentAxisUnits : list
+            The dependent axis output units.
         """
         # Flatten the columns into a single list to make it easier to use.
-        columns       = ListTools.Flatten([xAxisColumn, yDataColumns])
+        columns       = ListTools.Flatten([independentAxisColumn, dependentAxisColumn])
 
         # Convert the data to the output value and units.
         convertedData = [cls.ConvertSeries(data[column]) for column in columns]
 
-        xLabel        = cls.AddUnitsSuffix(xAxisColumn, convertedData[0])
-        yLabels       = cls.AddUnitsSuffix(ListTools.Flatten(yDataColumns), convertedData[1:])
+        independentAxisUnits = cls.GetUnitsSuffix(independentAxisColumn, convertedData[0])
+        dependentAxisUnits   = cls.GetUnitsSuffix(ListTools.Flatten(dependentAxisColumn), convertedData[1:])
 
         convertedData = [series.values.quantity.magnitude for series in convertedData]
         convertedData = pd.DataFrame(convertedData).T
         convertedData = convertedData.set_axis(columns, axis=1, copy=False)
 
-        return convertedData, xLabel, yLabels
+        return convertedData, independentAxisUnits, dependentAxisUnits
 
 
     @classmethod
@@ -93,11 +93,13 @@ class Units():
             The values converted to the output units.
         """
         toUnits = cls.unitTypes.loc[series.attrs["unitstype"], "Unit"]
+        # print("\nSeries:", series.name)
+        # print("Units:", toUnits)
         return series.pint.to(toUnits)
 
 
     @classmethod
-    def AddUnitsSuffix(cls, labels:str|list, data:pd.DataFrame|pd.core.series.Series|list):
+    def GetUnitsSuffix(cls, labels:str|list, data:pd.DataFrame|pd.core.series.Series|list):
         """
         Add title, x-axis label, and y-axis label.  Allows for multiple axes to be labeled at once.
         Extracts the units from PintArrays.
@@ -126,15 +128,48 @@ class Units():
             if not all([isinstance(item.values, pint_pandas.pint_array.PintArray) for item in data]):
                 raise Exception("The x data must be PintArray(s).")
 
-            labels = [label+" ("+str(entry.values.quantity.units)+")" for label, entry in zip(labels, data)]
+            labels = [str(entry.values.quantity.units) for label, entry in zip(labels, data)]
         else:
             # For a single entry.
             if not isinstance(data.values, pint_pandas.pint_array.PintArray):
                 raise Exception("The x data must be PintArray(s).")
 
-            labels = labels + " (" + str(data.values.quantity.units) + ")"
+            labels = str(data.values.quantity.units)
 
         return labels
+
+
+
+    @classmethod
+    def CombineLabelsAndUnits(cls, labels:str|list, units:str|list):
+        """
+        Add title, x-axis label, and y-axis label.  Allows for multiple axes to be labeled at once.
+        Extracts the units from PintArrays.
+
+        Parameters
+        ----------
+        labels : str or array like of str
+            Label(s).  If axeses is an array, labels can be an array of the same length.
+        units :str or array like of str.
+            Units.
+
+        Returns
+        -------
+        labels : string or list of strings
+            The labels with the units appended.
+        """
+        if isinstance(labels, list):
+            # For a list of entries.
+            if not isinstance(units, list):
+                raise Exception("The x labels are a list and the units type is not compatible.")
+
+            labels = [label+" ("+entry+")" for label, entry in zip(labels, units)]
+        else:
+            # For a single entry.
+            labels = labels + " (" + units + ")"
+
+        return labels
+
 
 
     @classmethod

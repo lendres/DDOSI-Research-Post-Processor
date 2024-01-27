@@ -72,10 +72,12 @@ class Plots():
         yDataLabels    = [[wobColumn], [rpmColumn]]
         kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
 
-        convertedData, xLabel, yLabels = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
-        figure, axeses                 = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
+        figure, axeses                    = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
 
         # Title and labels.
+        xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
+        yLabels = Units.CombineLabelsAndUnits(["Weight on Bit", "Rotary Speed"], ySuffixes)
         AxesHelper.Label(axeses, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
@@ -91,17 +93,17 @@ class Plots():
 
     @classmethod
     def NewTobWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", tobColumn:str="Torque on Bit", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Torque", titleSuffix:str=None, **kwargs):
-        return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Torque (daN.m)", tobColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
+        return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Torque", tobColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
     @classmethod
     def NewRopWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", ropColumn:str="Rate of Penetration", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Rate of Penetration", titleSuffix:str=None, **kwargs):
-        return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Rate of Penetration (cm/s)", ropColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
+        return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Rate of Penetration", ropColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
     @classmethod
     def NewDepthOfCutWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", depthOfCutColumn:str="Depth of Cut", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Depth of Cut", titleSuffix:str=None, **kwargs):
-        return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Depth of Cut (cm/revolution)", depthOfCutColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
+        return cls.NewParameterWobAndRotarySpeedPlot(title, data, xAxisColumn, "Depth of Cut", depthOfCutColumn, wobColumn, rpmColumn, titleSuffix, **kwargs)
 
 
     @classmethod
@@ -183,10 +185,12 @@ class Plots():
         yDataLabels = [[parameterColumn], [wobColumn], [rpmColumn]]
         kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
 
-        convertedData, xLabel, yLabels = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
-        figure, axeses                 = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
+        figure, axeses                    = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
 
         # Labels.
+        xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
+        yLabels = Units.CombineLabelsAndUnits([parameterLabel, "Weight on Bit", "Rotary Speed"], ySuffixes)
         AxesHelper.Label(axeses, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
@@ -197,12 +201,15 @@ class Plots():
         # Creates a figure with two axes having an aligned (shared) x-axis.
         figure, axeses = PlotHelper.NewMultiYAxesFigure(3)
 
-        yDataLabels = [[wobColumn], [rpmColumn]]
-        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
-        PlotMaker.MultiAxesPlot(axeses[1:], data, xAxisColumn, yDataLabels, "x", **kwargs)
+        yDataLabels                       = [[wobColumn], [rpmColumn]]
+        kwargs                            = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
+        PlotMaker.MultiAxesPlot(axeses[1:], convertedData, xAxisColumn, yDataLabels, "x", **kwargs)
 
         # Labels.
-        AxesHelper.Label(axeses, title, "Time (s)", ["", "Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
+        xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
+        yLabels = Units.CombineLabelsAndUnits(["", "Weight on Bit", "Rotary Speed"], ySuffixes)
+        AxesHelper.Label(axeses, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
 
@@ -217,12 +224,14 @@ class Plots():
         figure = plt.gcf()
         axes   = plt.gca()
 
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", columns)
+
         for i in range(len(columns)):
             axes.plot(data["Time"].values.quantity.m, data[columns[i]].values.quantity.m, label=columns[i], **(seriesKeyWordArgs[i]))
 
         xLabels = AxesHelper.AddUnitsSuffix("Time", data["Time"])
-        yLabels = AxesHelper.AddUnitsSuffix("Acceleration", data[columns[0]])
-        AxesHelper.Label(axes, title, xLabels, yLabels, titleSuffix=titleSuffix)
+        ySuffixes = AxesHelper.AddUnitsSuffix("Acceleration", data[columns[0]])
+        AxesHelper.Label(axes, title, xLabels, ySuffixes, titleSuffix=titleSuffix)
 
         return figure, axes
 
@@ -245,10 +254,12 @@ class Plots():
         figure = plt.gcf()
         axes   = plt.gca()
 
+        # convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", column)
+
         axes.plot(data["Time"].values.quantity.m, data[column].values.quantity.m, label=column, **kwargs)
 
         xLabels = AxesHelper.AddUnitsSuffix("Time", data["Time"])
-        yLabels = AxesHelper.AddUnitsSuffix("Acceleration", data[column])
-        AxesHelper.Label(axes, title, xLabels, yLabels, titleSuffix=titleSuffix)
+        ySuffixes = AxesHelper.AddUnitsSuffix("Acceleration", data[column])
+        AxesHelper.Label(axes, title, xLabels, ySuffixes, titleSuffix=titleSuffix)
 
         return figure, axes
