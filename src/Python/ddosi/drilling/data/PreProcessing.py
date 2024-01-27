@@ -33,13 +33,14 @@ class PreProcessing():
         # zero because plots that use a starting value of zero create a big spike and look funny.
         rateOfPenetration[0] = rateOfPenetration[1]
 
-        data["Rate of Penetration"] = rateOfPenetration
+        data["Rate of Penetration"]                    = rateOfPenetration
+        data["Rate of Penetration"].attrs["unitstype"] = "penetration rate"
 
 
     @classmethod
     def CalculateDepthOfCutFromRopAndRotarySpeed(cls, data, ropColumn="Rate of Penetration", rpmColumn="Rotary Speed"):
         """
-        Calculates the depth of cut from the rate of penetration and revolutions per minute.
+        Calculates the depth of cut from the rate of penetration and rotary speed.
 
         Parameters
         ----------
@@ -54,6 +55,7 @@ class PreProcessing():
         -------
         None.
         """
-        revolutionsPerSecond = data[rpmColumn] / 60.0
-        data["Depth of Cut"] = data[ropColumn] / revolutionsPerSecond
+        revolutionsPerSecond = data[rpmColumn].pint.to("revolutions_per_second")
+        data["Depth of Cut"] = data[ropColumn].pint.to("meter_per_second") / revolutionsPerSecond
         data["Depth of Cut"].replace([np.inf, -np.inf], 0, inplace=True)
+        data["Depth of Cut"].attrs["unitstype"] = "spiral rate"

@@ -3,7 +3,10 @@ Created on March 15, 2023
 @author: Lance A. Endres
 """
 import pandas                                                        as pd
+
 from   ddosi.signalprocessing.ButterworthLowPass                     import ButterworthLowPassFilter
+from   ddosi.units.Units                                             import Units
+
 
 class SignalProcessing():
     """
@@ -45,7 +48,12 @@ class SignalProcessing():
 
             columnName       = column + " " + suffix
             data[columnName] = movingAverage.astype(data[column].dtype)
+
+            # The attributes are not maintained by the "rolling" type.
+            Units.CopyMetaData(data[columnName], data[column])
+
             newNames.append(columnName)
+
         return newNames, suffix
 
 
@@ -84,7 +92,12 @@ class SignalProcessing():
 
             columnName       = column + " " + suffix
             data[columnName] = rootMeanSquare.astype(data[column].dtype)
+
+            # The attributes are not maintained by the "rolling" type.
+            Units.CopyMetaData(data[columnName], data[column])
+
             newNames.append(columnName)
+
         return newNames, suffix
 
 
@@ -121,5 +134,10 @@ class SignalProcessing():
             filteredData, b, a = ButterworthLowPassFilter(data[column].values.quantity.m, cutOff, samplingFrequency, order)
             columnName         = column + " " + suffix
             data[columnName]   = pd.Series(filteredData, dtype=data[column].dtype)
+
+            # The magnitudes are extracted to speed up the processing, that means the attributes were lost and we need to restore them.
+            Units.CopyMetaData(data[columnName], data[column])
+
             newNames.append(columnName)
+
         return newNames, suffix

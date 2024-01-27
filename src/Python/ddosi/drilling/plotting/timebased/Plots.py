@@ -13,12 +13,7 @@ from   lendres.plotting.LegendOptions                                import Lege
 from   lendres.datatypes.ListTools                                   import ListTools
 
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
-
-import pint
-import pint_pandas
-
-from pint import UnitRegistry
-ureg = UnitRegistry()
+from   ddosi.units.Units                                             import Units
 
 
 class Plots():
@@ -74,30 +69,16 @@ class Plots():
     @classmethod
     # @ureg.wraps((None, None), (None, None, None, None, None, None, None, None), False)
     def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
-        yDataLabels = [[wobColumn], [rpmColumn]]
-        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        yDataLabels    = [[wobColumn], [rpmColumn]]
+        kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
 
-        data = cls.ConvertOutput(data, xAxisColumn, yDataLabels)
-
-        figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
+        convertedData, xLabel, yLabels = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
+        figure, axeses                 = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
 
         # Title and labels.
-        xLabels = AxesHelper.AddUnitsSuffix(xAxisColumn, data[xAxisColumn])
-        yLabels = AxesHelper.AddUnitsSuffix([wobColumn, rpmColumn], data[[wobColumn, rpmColumn]])
-        AxesHelper.Label(axeses, title, xLabels, yLabels, titleSuffix=titleSuffix)
+        AxesHelper.Label(axeses, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
-
-
-    @classmethod
-    def ConvertOutput(cls, data, xAxisColumn, yDataColumns):
-        columns = ListTools.Flatten([xAxisColumn, yDataColumns])
-        convertedData = data[columns]
-        print("\n\nColumns:", columns)
-        yColumn = (yDataColumns[0])[0]
-        print("Y column 0:", yColumn)
-        convertedData[yColumn] = convertedData[yColumn].pint.to("kg")
-        return convertedData
 
 
     @classmethod
@@ -202,10 +183,11 @@ class Plots():
         yDataLabels = [[parameterColumn], [wobColumn], [rpmColumn]]
         kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
 
-        figure, axeses = PlotMaker.NewMultiYAxesPlot(data, xAxisColumn, yDataLabels, **kwargs)
+        convertedData, xLabel, yLabels = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
+        figure, axeses                 = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
 
         # Labels.
-        AxesHelper.Label(axeses, title, "Time (s)", [parameterLabel, "Weight on Bit (tons)", "Rotary Speed (RPM)"], titleSuffix=titleSuffix)
+        AxesHelper.Label(axeses, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
 

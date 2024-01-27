@@ -6,6 +6,9 @@ import pandas                                                        as pd
 import os
 
 from   lendres.path.Path                                             import Path
+from   lendres.datatypes.ListTools                                   import ListTools
+
+import pint_pandas
 
 
 class Units():
@@ -33,3 +36,169 @@ class Units():
 
         # The first column are row labels and we indicate that by using "indoex_col=0".
         cls.unitTypes = pd.read_excel(file, sheet_name=system, index_col=0)
+
+
+    @classmethod
+    def ConvertOutput(cls, data:pd.DataFrame, xAxisColumn:str, yDataColumns:list):
+        """
+        Converts the specified columns to the output units and returns the data and labels with units applied.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            DESCRIPTION.
+        xAxisColumn : str
+            The column name of the independent data.
+        yDataColumns : list of str
+            The column names for the dependent data.
+
+        Returns
+        -------
+        convertedData : pandas.DataFrame
+            The converted data.
+        xLabel : str
+            The x-axis label with the output units appended.
+        yLabels : TYPE
+            The y-axis labels with the output units appended.
+        """
+        # Flatten the columns into a single list to make it easier to use.
+        columns       = ListTools.Flatten([xAxisColumn, yDataColumns])
+
+        # Convert the data to the output value and units.
+        convertedData = [cls.ConvertSeries(data[column]) for column in columns]
+
+        xLabel        = cls.AddUnitsSuffix(xAxisColumn, convertedData[0])
+        yLabels       = cls.AddUnitsSuffix(ListTools.Flatten(yDataColumns), convertedData[1:])
+
+        convertedData = [series.values.quantity.magnitude for series in convertedData]
+        convertedData = pd.DataFrame(convertedData).T
+        convertedData = convertedData.set_axis(columns, axis=1, copy=False)
+
+        return convertedData, xLabel, yLabels
+
+
+    @classmethod
+    def ConvertSeries(cls, series:pd.Series) -> pd.Series:
+        """
+        Converts a pandas.Series to the output units.
+
+        Parameters
+        ----------
+        series : pandas.Series
+            DESCRIPTION.
+
+        Returns
+        -------
+        pandas.Series
+            The values converted to the output units.
+        """
+        toUnits = cls.unitTypes.loc[series.attrs["unitstype"], "Unit"]
+        return series.pint.to(toUnits)
+
+
+    @classmethod
+    def AddUnitsSuffix(cls, labels:str|list, data:pd.DataFrame|pd.core.series.Series|list):
+        """
+        Add title, x-axis label, and y-axis label.  Allows for multiple axes to be labeled at once.
+        Extracts the units from PintArrays.
+
+        Parameters
+        ----------
+        labels : string or array like of strings
+            Label(s).  If axeses is an array, labels can be an array of the same length.
+        data : pd.DataFrame, pd.core.series.Series, or list of pd.core.series.Series where each series contains a pint_pandas.pint_array.PintArray
+            Data to extract the units from.
+
+        Returns
+        -------
+        labels : string or list of strings
+            The labels with the units appended.
+        """
+        # Convert a DataFrame to a list of Series.
+        if isinstance(data, pd.DataFrame):
+            data = [data[column] for column in data]
+
+        if isinstance(labels, list):
+            # For a list of entries.
+            if not isinstance(data, list):
+                raise Exception("The x labels are a list and the x data type is not compatible.")
+
+            if not all([isinstance(item.values, pint_pandas.pint_array.PintArray) for item in data]):
+                raise Exception("The x data must be PintArray(s).")
+
+            labels = [label+" ("+str(entry.values.quantity.units)+")" for label, entry in zip(labels, data)]
+        else:
+            # For a single entry.
+            if not isinstance(data.values, pint_pandas.pint_array.PintArray):
+                raise Exception("The x data must be PintArray(s).")
+
+            labels = labels + " (" + str(data.values.quantity.units) + ")"
+
+        return labels
+
+
+    @classmethod
+    def GetSeriesMagnitudes(cls, series):
+        """
+        Determines if a series contains data that is a pint data type.  If it is, it extracts the magnitudes and
+        returns those.  Otherwise the original data is returned.
+
+        Parameters
+        ----------
+        series : pandas.Series
+            A Pandas series.
+
+        Returns
+        -------
+        pandas.Series or numpy.ndarray
+            The original data or the extract magnitudes.
+        """
+        if cls._IsSeriesOfPintDType(series):
+            return series.values.quantity.magnitude
+        else:
+            return series
+
+
+    @classmethod
+    def CopyMetaData(cls, toData:pd.Series|pd.DataFrame, fromData:pd.Series|pd.DataFrame):
+        """
+        Copies the "attrs" metadata from one Series or DataFrame to another.  The metadata is supposed to be carried with each Series
+        or DataFrame, however, it currently has bugs and some functions drop the data.  Therefore, we need to manually copy it in
+        some cases.
+
+        Parameters
+        ----------
+        toData : pd.Series|pd.DataFrame
+            Data to copy the attrs to.
+        fromData : pd.Series|pd.DataFrame
+            Data to copy the attrs from.
+
+        Returns
+        -------
+        None.
+        """
+        match toData:
+            case pd.Series():
+                toData.attrs = fromData.attrs
+
+            case pd.DataFrame():
+                for column in toData:
+                    toData[column].attrs = fromData[column].attrs
+
+
+    @classmethod
+    def _IsSeriesOfPintDType(cls, series):
+        """
+        Determines if a pandas.Series contains data that is Pint (Units library) data type.
+
+        Parameters
+        ----------
+        series : pandas.Series
+            A Pandas Series.
+
+        Returns
+        -------
+        bool
+            True if the series contain Pint data.
+        """
+        return isinstance(series.values, pint_pandas.pint_array.PintArray)

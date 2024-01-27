@@ -13,6 +13,8 @@ import pickle
 from   SegmentSignalPy                                               import SegmentationResults
 from   SegmentSignalPy                                               import FindSignificantZones
 
+from   ddosi.units.Units                                             import Units
+
 from   lendres.plotting.AxesHelper                                   import AxesHelper
 from   lendres.plotting.PlotHelper                                   import PlotHelper
 
@@ -349,7 +351,9 @@ class SignificantZones():
         self.significantZonesIndices = np.delete(self.significantZonesIndices, dropZones, axis=0)
 
         # Generate new data as a subset of the old.
-        dataSubset = data.drop(dropIndices, inplace=False).reset_index()
+        # The attributes get dropped in the process, so we copy them manually.
+        dataSubset = data.drop(dropIndices, inplace=False).reset_index(drop=True)
+        Units.CopyMetaData(dataSubset, data)
 
         # Update the x-axis data.  This must be done after the data has been updated to make sure we get the new, reduced data.
         match xData:
