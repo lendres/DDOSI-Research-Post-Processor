@@ -227,11 +227,12 @@ class Plots():
         convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", columns)
 
         for i in range(len(columns)):
-            axes.plot(data["Time"].values.quantity.m, data[columns[i]].values.quantity.m, label=columns[i], **(seriesKeyWordArgs[i]))
+            axes.plot(convertedData["Time"], convertedData[columns[i]], label=columns[i], **(seriesKeyWordArgs[i]))
 
-        xLabels = AxesHelper.AddUnitsSuffix("Time", data["Time"])
-        ySuffixes = AxesHelper.AddUnitsSuffix("Acceleration", data[columns[0]])
-        AxesHelper.Label(axes, title, xLabels, ySuffixes, titleSuffix=titleSuffix)
+        xLabel  = Units.CombineLabelsAndUnits("Time", xSuffix)
+        yLabels = Units.CombineLabelsAndUnits("Acceleration", ySuffixes[0])
+
+        AxesHelper.Label(axes, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axes
 
@@ -254,12 +255,13 @@ class Plots():
         figure = plt.gcf()
         axes   = plt.gca()
 
-        # convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", column)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", column)
 
-        axes.plot(data["Time"].values.quantity.m, data[column].values.quantity.m, label=column, **kwargs)
+        axes.plot(convertedData["Time"], convertedData[column], label=column, **kwargs)
 
-        xLabels = AxesHelper.AddUnitsSuffix("Time", data["Time"])
-        ySuffixes = AxesHelper.AddUnitsSuffix("Acceleration", data[column])
-        AxesHelper.Label(axes, title, xLabels, ySuffixes, titleSuffix=titleSuffix)
+        xLabel  = Units.CombineLabelsAndUnits("Time", xSuffix)
+        yLabels = Units.CombineLabelsAndUnits("Acceleration", ySuffixes[0])
+
+        AxesHelper.Label(axes, title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axes
