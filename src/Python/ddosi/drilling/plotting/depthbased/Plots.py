@@ -13,6 +13,7 @@ from   lendres.plotting.LegendHelper                                 import Lege
 from   lendres.plotting.LegendOptions                                import LegendOptions
 
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
+from   ddosi.units.Units                                             import Units
 
 
 class Plots():
@@ -111,14 +112,17 @@ class Plots():
         axeses : tuple of matplotlib.axes.Axes
             The axes of the plot.
         """
-        yDataLabels    = [[wobColumn], [rpmColumn]]
+        xAxisColumns   = [[wobColumn], [rpmColumn]]
+        kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, xAxisColumns)
 
-        kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
-        figure, axeses = PlotMaker.NewMultiXAxesPlot(data, yAxisColumn, yDataLabels, **kwargs)
+        convertedData, ySuffix, xSuffixes = Units.ConvertOutput(data, yAxisColumn, xAxisColumns)
+        figure, axeses                    = PlotMaker.NewMultiXAxesPlot(convertedData, yAxisColumn, xAxisColumns, **kwargs)
 
         cls.SetFigureSize(figure)
 
-        AxesHelper.Label(axeses, title, ["Weight on Bit (tons)", "Revolutions per Minute"], yAxisColumn+" ("+yUnits+")", titleSuffix=titleSuffix)
+        yLabel  = Units.CombineLabelsAndUnits(yAxisColumn, ySuffix)
+        xLabels = Units.CombineLabelsAndUnits(["Weight on Bit", "Rotary Speed"], xSuffixes)
+        AxesHelper.Label(axeses, title, xLabels, yLabel, titleSuffix=titleSuffix)
 
         # For depth based plots we want the smallest value at the top, so we need to reverse the axis limits.
         AxesHelper.ReverseYAxisLimits(axeses[0])
