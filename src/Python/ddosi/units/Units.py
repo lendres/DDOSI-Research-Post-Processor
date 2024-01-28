@@ -8,29 +8,45 @@ import os
 from   lendres.path.Path                                             import Path
 from   lendres.datatypes.ListTools                                   import ListTools
 
+from   pint                                                          import UnitRegistry
 import pint_pandas
 
 
 class Units():
     unitTypes     = None
+    ureg          = None
 
 
     @classmethod
-    def Initialize(cls, system:str="SI", file:str="Units.xlsx"):
+    def Initialize(cls, system:str="SI", file:str="Units.xlsx", definitionsfile:str="default_en.txt"):
         """
         Initializes the units types by reading them from a file.  Call this before attempting to use units.
 
         Parameters
         ----------
+        system : str, optional
+            The output units system.
         file : str, optional
             Excel file that contains the color map.  If none is supplied, it is assumed a file named "Units.xlsx" in the same directory as the source
             code file is the input.  If a file name (and no path) is supplied, it is assumed the file is in the same folder as the source code file.  The
             default is None.
+        definitionsfile : str, options
+            The Pint definitions file.
 
         Returns
         -------
         None.
         """
+        if not Path.ContainsDirectory(definitionsfile):
+            definitionsfile = os.path.join(Path.GetDirectory(__file__), definitionsfile)
+
+        cls.ureg = UnitRegistry(definitionsfile)
+
+        # Pint (units) setup.
+        pint_pandas.PintType.ureg = cls.ureg
+        pint_pandas.PintType.ureg.default_format = "P~"
+        pint_pandas.PintType.ureg.setup_matplotlib(True)
+
         if not Path.ContainsDirectory(file):
             file = os.path.join(Path.GetDirectory(__file__), file)
 
