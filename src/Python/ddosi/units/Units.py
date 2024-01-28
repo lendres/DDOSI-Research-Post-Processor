@@ -5,6 +5,8 @@ Created on January 25, 2024
 import pandas                                                        as pd
 import os
 
+from   lendres.io.ConsoleHelper                                      import ConsoleHelper
+from   lendres.io.IO                                                 import IO
 from   lendres.path.Path                                             import Path
 from   lendres.datatypes.ListTools                                   import ListTools
 
@@ -42,7 +44,7 @@ class Units():
 
         cls.ureg = UnitRegistry(definitionsfile)
 
-        # Pint (units) setup.
+        # Pint pandas setup.
         pint_pandas.PintType.ureg = cls.ureg
         pint_pandas.PintType.ureg.default_format = "P~"
         pint_pandas.PintType.ureg.setup_matplotlib(True)
@@ -108,9 +110,16 @@ class Units():
         pandas.Series
             The values converted to the output units.
         """
+        IO.consoleHelper.Print("\nSeries: "+series.name, ConsoleHelper.VERBOSEDEBUG)
+
+        if not "unitstype" in series.attrs or not cls._IsSeriesOfPintDType(series):
+            IO.consoleHelper.PrintWarning("The series cannot be converted.")
+            return series
+
         toUnits = cls.unitTypes.loc[series.attrs["unitstype"], "Unit"]
-        # print("\nSeries:", series.name)
-        # print("Units:", toUnits)
+
+        IO.consoleHelper.Print("Units: "+toUnits, ConsoleHelper.VERBOSEDEBUG)
+
         return series.pint.to(toUnits)
 
 
