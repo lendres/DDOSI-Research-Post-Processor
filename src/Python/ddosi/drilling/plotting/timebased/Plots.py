@@ -69,11 +69,11 @@ class Plots():
     @classmethod
     # @ureg.wraps((None, None), (None, None, None, None, None, None, None, None), False)
     def NewWobAndRotarySpeedPlot(cls, data:pd.DataFrame, xAxisColumn:str="Time", wobColumn:str="Weight on Bit", rpmColumn:str="Rotary Speed", title:str="Weight on Bit and Rotary Speed", titleSuffix:str=None, **kwargs):
-        yDataLabels    = [[wobColumn], [rpmColumn]]
-        kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        yAxisColumns   = [[wobColumn], [rpmColumn]]
+        kwargs         = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yAxisColumns)
 
-        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
-        figure, axeses                    = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yAxisColumns)
+        figure, axeses                    = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yAxisColumns, **kwargs)
 
         # Title and labels.
         xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
@@ -182,11 +182,11 @@ class Plots():
         axeses : tuple of matplotlib.axes.Axes
             The axes of the plot.
         """
-        yDataLabels = [[parameterColumn], [wobColumn], [rpmColumn]]
-        kwargs      = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
+        yAxisColumns = [[parameterColumn], [wobColumn], [rpmColumn]]
+        kwargs       = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yAxisColumns)
 
-        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
-        figure, axeses                    = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yDataLabels, **kwargs)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yAxisColumns)
+        figure, axeses                    = PlotMaker.NewMultiYAxesPlot(convertedData, xAxisColumn, yAxisColumns, **kwargs)
 
         # Labels.
         xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
@@ -201,10 +201,10 @@ class Plots():
         # Creates a figure with two axes having an aligned (shared) x-axis.
         figure, axeses = PlotHelper.NewMultiYAxesFigure(3)
 
-        yDataLabels                       = [[wobColumn], [rpmColumn]]
-        kwargs                            = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yDataLabels)
-        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yDataLabels)
-        PlotMaker.MultiAxesPlot(axeses[1:], convertedData, xAxisColumn, yDataLabels, "x", **kwargs)
+        yAxisColumns                      = [[wobColumn], [rpmColumn]]
+        kwargs                            = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, yAxisColumns)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, xAxisColumn, yAxisColumns)
+        PlotMaker.MultiAxesPlot(axeses[1:], convertedData, xAxisColumn, yAxisColumns, "x", **kwargs)
 
         # Labels.
         xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
