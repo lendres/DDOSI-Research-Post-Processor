@@ -208,8 +208,8 @@ class Plots():
 
         # Labels.
         xLabel  = Units.CombineLabelsAndUnits(xAxisColumn, xSuffix)
-        yLabels = Units.CombineLabelsAndUnits(["", "Weight on Bit", "Rotary Speed"], ySuffixes)
-        AxesHelper.Label(axeses, title, xLabel, yLabels, titleSuffix=titleSuffix)
+        yLabels = Units.CombineLabelsAndUnits(["Weight on Bit", "Rotary Speed"], ySuffixes)
+        AxesHelper.Label(axeses[1:], title, xLabel, yLabels, titleSuffix=titleSuffix)
 
         return figure, axeses
 

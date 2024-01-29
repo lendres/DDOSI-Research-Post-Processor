@@ -57,7 +57,7 @@ class Units():
 
 
     @classmethod
-    def ConvertOutput(cls, data:pd.DataFrame, independentAxisColumn:str, dependentAxisColumn:list):
+    def ConvertOutput(cls, data:pd.DataFrame, independentAxisColumn:str, dependentAxisColumns:list):
         """
         Converts the specified columns to the output units and returns the data and labels with units applied.
 
@@ -67,7 +67,7 @@ class Units():
             DESCRIPTION.
         independentAxisColumn : str
             The column name of the independent data.
-        dependentAxisColumn : list of str
+        dependentAxisColumns : list of str
             The column names for the dependent data.
 
         Returns
@@ -80,15 +80,15 @@ class Units():
             The dependent axis output units.
         """
         # Flatten the columns into a single list to make it easier to use.
-        columns       = ListTools.Flatten([independentAxisColumn, dependentAxisColumn])
+        columns              = ListTools.Flatten([independentAxisColumn, dependentAxisColumns])
 
         # Convert the data to the output value and units.
-        convertedData = [cls.ConvertSeries(data[column]) for column in columns]
+        convertedData = [cls.ConvertSeriesUnits(data[column]) for column in columns]
 
         independentAxisUnits = cls.GetUnitsSuffix(independentAxisColumn, convertedData[0])
-        dependentAxisUnits   = cls.GetUnitsSuffix(ListTools.Flatten(dependentAxisColumn), convertedData[1:])
+        dependentAxisUnits   = cls.GetUnitsSuffix(dependentAxisColumns, convertedData[1:])
 
-        convertedData = [series.values.quantity.magnitude for series in convertedData]
+        convertedData = [cls.GetSeriesMagnitudes(series) for series in convertedData]
         convertedData = pd.DataFrame(convertedData).T
         convertedData = convertedData.set_axis(columns, axis=1, copy=False)
 
@@ -96,7 +96,7 @@ class Units():
 
 
     @classmethod
-    def ConvertSeries(cls, series:pd.Series) -> pd.Series:
+    def ConvertSeriesUnits(cls, series:pd.Series) -> pd.Series:
         """
         Converts a pandas.Series to the output units.
 
@@ -124,10 +124,9 @@ class Units():
 
 
     @classmethod
-    def GetUnitsSuffix(cls, labels:str|list, data:pd.DataFrame|pd.core.series.Series|list):
+    def GetUnitsSuffix(cls, labels:str|list, data:pd.DataFrame|pd.core.series.Series|list) -> str|list:
         """
-        Add title, x-axis label, and y-axis label.  Allows for multiple axes to be labeled at once.
-        Extracts the units from PintArrays.
+        Gets the units associated with each label.
 
         Parameters
         ----------
@@ -138,8 +137,8 @@ class Units():
 
         Returns
         -------
-        labels : string or list of strings
-            The labels with the units appended.
+        units : string or list of strings
+            The units for each label.
         """
         # Convert a DataFrame to a list of Series.
         if isinstance(data, pd.DataFrame):
@@ -150,26 +149,32 @@ class Units():
             if not isinstance(data, list):
                 raise Exception("The x labels are a list and the x data type is not compatible.")
 
-            if not all([isinstance(item.values, pint_pandas.pint_array.PintArray) for item in data]):
-                raise Exception("The x data must be PintArray(s).")
-
-            labels = [str(entry.values.quantity.units) for label, entry in zip(labels, data)]
+            if not all([cls._IsSeriesOfPintDType(item) for item in data]):
+                # raise Exception("The x data must be PintArray(s).")
+                IO.consoleHelper.PrintWarning("The labels cannot be extracted from the series.")
+                units = ["" for label, entry in zip(labels, data)]
+            else:
+                units = [str(entry.values.quantity.units) for label, entry in zip(labels, data)]
         else:
             # For a single entry.
-            if not isinstance(data.values, pint_pandas.pint_array.PintArray):
-                raise Exception("The x data must be PintArray(s).")
+            if not cls._IsSeriesOfPintDType(data):
+                # raise Exception("The x data must be PintArray(s).")
+                IO.consoleHelper.PrintWarning("The labels cannot be extracted from the series.")
+                units = ""
+            else:
+                units = str(data.values.quantity.units)
 
-            labels = str(data.values.quantity.units)
-
-        return labels
+        return units
 
 
 
     @classmethod
-    def CombineLabelsAndUnits(cls, labels:str|list, units:str|list):
+    def CombineLabelsAndUnits(cls, labels:str|list, units:str|list) -> str|list:
         """
-        Add title, x-axis label, and y-axis label.  Allows for multiple axes to be labeled at once.
-        Extracts the units from PintArrays.
+        Combines the axis label with the units (if provided).
+        Example:
+            In: ["Label 1", "Label 2"], ["A", "B"]
+            Out: ["Label 1 (A)", "Label 2 (B)"]
 
         Parameters
         ----------
@@ -180,7 +185,7 @@ class Units():
 
         Returns
         -------
-        labels : string or list of strings
+        labels : str or list of str
             The labels with the units appended.
         """
         if isinstance(labels, list):
@@ -188,13 +193,37 @@ class Units():
             if not isinstance(units, list):
                 raise Exception("The x labels are a list and the units type is not compatible.")
 
-            labels = [label+" ("+entry+")" for label, entry in zip(labels, units)]
+            labels = [label if entry=="" else label+" ("+entry+")" for label, entry in zip(labels, units)]
         else:
             # For a single entry.
-            labels = labels + " (" + units + ")"
+            labels = labels if units=="" else labels + " (" + units + ")"
 
         return labels
 
+
+    @classmethod
+    def AddUnitsSuffixToLabel(cls, label:str, data:pd.core.series.Series) -> str:
+        """
+        Creates an axis label with the unit appended based on the label provided and the data units.
+        Combines the two functions of "GetUnitsSuffix" and "CombineLabelsAndUnits".
+
+        Parameters
+        ----------
+        label : str
+            The axis label.
+        data : pandas.Series
+            A series that has units meta data and pint data type.
+
+        Returns
+        -------
+        labelWithUnits : str
+            The axis label with the units appended.
+        """
+        # To make this work for a DataFrame, we would also have to pass the column names as we cannot assume the column
+        # names and axis labels are the same.
+        units = cls.GetUnitsSuffix(label, data)
+        labelsWithUnits = cls.CombineLabelsAndUnits(label, units)
+        return labelsWithUnits
 
 
     @classmethod
