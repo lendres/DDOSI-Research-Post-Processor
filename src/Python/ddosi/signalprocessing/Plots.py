@@ -63,7 +63,7 @@ class Plots():
 
         kwargs = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
         Pxx, frequencies = plt.psd(data[column], Fs=samplingFrequency, label=column, **kwargs)
-        AxesHelper.Label(axes, "Power Spectral Density of Accelerations", xLabels="Frequency", yLabels="Power Spectral Density (dB/Hz)", titleSuffix=titleSuffix)
+        AxesHelper.Label(axes, "Power Spectral Density of Accelerations", xLabels="Frequency (Hz)", yLabels="Power Spectral Density (dB/Hz)", titleSuffix=titleSuffix)
 
         if labelPeaks:
             # The plotted line on the PSD is different than the returned values.  We need to scale the retuned values by the same
