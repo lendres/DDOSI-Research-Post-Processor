@@ -80,7 +80,7 @@ class Units():
             The dependent axis output units.
         """
         # Flatten the columns into a single list to make it easier to use.
-        columns              = ListTools.Flatten([independentAxisColumn, dependentAxisColumns])
+        columns = ListTools.Flatten([independentAxisColumn, dependentAxisColumns])
 
         # Convert the data to the output value and units.
         convertedData = [cls.ConvertSeriesUnits(data[column]) for column in columns]
@@ -291,3 +291,25 @@ class Units():
             True if the series contain Pint data.
         """
         return isinstance(series.values, pint_pandas.pint_array.PintArray)
+
+
+    @classmethod
+    def ToCsv(cls, dataFrame:pd.DataFrame, path:str, **kwargs):
+        unitsForHeaderInsert = []
+        typesForHeaderInsert = []
+        for column in dataFrame:
+            unitsForHeaderInsert.append(dataFrame[column].values.quantity.units)
+            typesForHeaderInsert.append(dataFrame[column].attrs["unitstype"])
+        dataFrame.columns = pd.MultiIndex.from_tuples(list(zip(dataFrame.columns, unitsForHeaderInsert, typesForHeaderInsert)))
+        dataFrame.to_csv(path, **kwargs)
+
+
+    @classmethod
+    def FromCsv(cls, path):
+        dataFrame = pd.read_csv(path)
+        for column in dataFrame:
+#            dataFrame[column].attrs["unitstype"] = dataFrame[column]
+
+        dataFrame = dataFrame.pint.quantify(level=-1)
+
+        return dataFrame
