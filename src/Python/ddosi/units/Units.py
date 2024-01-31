@@ -294,6 +294,17 @@ class Units():
 
 
     @classmethod
+    def AddUnitsToDataFrame(cls, dataFrame, units, unitsTypes):
+        dataFrame.columns    = pd.MultiIndex.from_tuples(list(zip(dataFrame.columns, units)))
+        dataFrame            = dataFrame.pint.quantify(level=-1)
+
+        for column, unitType in zip(dataFrame, unitsTypes):
+            dataFrame[column].attrs["unitstype"] = unitType
+
+        return dataFrame
+
+
+    @classmethod
     def ToCsv(cls, dataFrame:pd.DataFrame, path:str, **kwargs):
         unitsForHeaderInsert = []
         typesForHeaderInsert = []
@@ -305,10 +316,12 @@ class Units():
 
 
     @classmethod
-    def FromCsv(cls, path):
-        dataFrame = pd.read_csv(path)
-        for column in dataFrame:
-#            dataFrame[column].attrs["unitstype"] = dataFrame[column]
+    def FromCsv(cls, path, **kwargs):
+        dataFrame = pd.read_csv(path, **kwargs)
+
+        unitsTypes = dataFrame.columns.get_level_values(1)
+        for column, unitsType in zip(dataFrame, unitsTypes):
+            dataFrame[column].attrs["unitstype"] = unitsType
 
         dataFrame = dataFrame.pint.quantify(level=-1)
 

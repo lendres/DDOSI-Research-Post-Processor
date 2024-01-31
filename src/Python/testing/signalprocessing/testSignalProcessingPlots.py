@@ -2,9 +2,6 @@
 Created on February 17, 2023
 @author: Lance A. Endres
 """
-
-from   scipy.signal                                                  import freqz
-
 import numpy                                                         as np
 import pandas                                                        as pd
 import matplotlib.pyplot                                             as plt
@@ -33,7 +30,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         pass
 
 
-    @unittest.skip
+    # @unittest.skip
     def testSpectrogram(self):
         startTime          = 0
         timeLength         = 10
