@@ -12,6 +12,9 @@ from   lendres.plotting.PlotHelper                                   import Plot
 
 from   ddosi.units.Units                                             import Units
 
+# from   pint                                                          import UnitRegistry
+# import pint_pandas
+
 import unittest
 
 
@@ -19,7 +22,12 @@ class testUnits(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        pass
+        # ureg = UnitRegistry()
+        # ureg.default_format = ".3fP"
+
+        pd.reset_option("all")
+        pd.set_option("display.max_columns", None)
+        pd.set_option("display.precision", 4)
 
 
     def setUp(self):
@@ -27,15 +35,21 @@ class testUnits(unittest.TestCase):
         Set up function that runs before each test.
         """
         self.dataFrame = FunctionGenerator.GetDisplacementVelocityAccelerationDataFrame()
+        print(self.dataFrame.head())
 
-        unitsForHeaderInsert   = ["m/s", "m/s", "m/s^2"]
+        unitsForHeaderInsert   = ["s", "m/s", "m/s", "m/s^2"]
         self.dataFrame.columns = pd.MultiIndex.from_tuples(list(zip(self.dataFrame.columns, unitsForHeaderInsert)))
-        self.accelerationData  = self.accelerationData.pint.quantify(level=-1)
+        self.dataFrame         = self.dataFrame.pint.quantify(level=-1)
 
-        accelerationTypes      = ["length", "velocity", "acceleration"]
+        unitsTypes             = ["time", "length", "velocity", "acceleration"]
 
-        for column, unitType in zip(self.accelerationData, accelerationTypes):
-            self.accelerationData[column].attrs["unitstype"] = unitType
+        for column, unitType in zip(self.dataFrame, unitsTypes):
+            self.dataFrame[column].attrs["unitstype"] = unitType
+
+        print("\n\nAfter adding units.")
+        print(self.dataFrame.head())
+        print("\n\n")
+        print(self.dataFrame.dtypes)
 
 
     #@unittest.skip
@@ -65,9 +79,21 @@ class testUnits(unittest.TestCase):
 
         axes = plt.gca()
 
-        axes.plot(dataFrame["time"], dataFrame["displacement"], label="Displacement")
-        axes.plot(dataFrame["time"], dataFrame["velocity"],     label="Velocity")
-        axes.plot(dataFrame["time"], dataFrame["acceleration"], label="Acceleration")
+        axes.plot(
+            Units.GetSeriesMagnitudes(dataFrame["time"]),
+            Units.GetSeriesMagnitudes(dataFrame["displacement"]),
+            label="Displacement"
+        )
+        axes.plot(
+            Units.GetSeriesMagnitudes(dataFrame["time"]),
+            Units.GetSeriesMagnitudes(dataFrame["velocity"]),
+            label="Velocity"
+        )
+        axes.plot(
+            Units.GetSeriesMagnitudes(dataFrame["time"]),
+            Units.GetSeriesMagnitudes(dataFrame["acceleration"]),
+            label="Acceleration"
+        )
 
         axes.set(title=title, xlabel="Time", ylabel="Value")
         plt.legend(loc="upper left")
