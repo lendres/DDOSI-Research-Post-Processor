@@ -112,8 +112,11 @@ class Units():
         """
         IO.consoleHelper.Print("\nSeries: "+series.name, ConsoleHelper.VERBOSEDEBUG)
 
-        if not "unitstype" in series.attrs or not cls._IsSeriesOfPintDType(series):
-            IO.consoleHelper.PrintWarning("The series cannot be converted.")
+        if not cls._IsSeriesOfPintDType(series):
+            IO.consoleHelper.PrintWarning("The series cannot be converted.  It does not contain Pint data.  Series: "+series.name)
+            return series
+        elif not "unitstype" in series.attrs:
+            IO.consoleHelper.PrintWarning("The series cannot be converted.  It does not contain the units type metadata.  Series: "+series.name)
             return series
 
         toUnits = cls.unitTypes.loc[series.attrs["unitstype"], "Unit"]
@@ -221,7 +224,7 @@ class Units():
         """
         # To make this work for a DataFrame, we would also have to pass the column names as we cannot assume the column
         # names and axis labels are the same.
-        units = cls.GetUnitsSuffix(label, data)
+        units           = cls.GetUnitsSuffix(label, data)
         labelsWithUnits = cls.CombineLabelsAndUnits(label, units)
         return labelsWithUnits
 
@@ -294,9 +297,28 @@ class Units():
 
 
     @classmethod
-    def AddUnitsToDataFrame(cls, dataFrame, units, unitsTypes):
-        dataFrame.columns    = pd.MultiIndex.from_tuples(list(zip(dataFrame.columns, units)))
-        dataFrame            = dataFrame.pint.quantify(level=-1)
+    def AddUnitsToDataFrame(cls, dataFrame:pd.DataFrame, units:list, unitsTypes:list) -> pd.DataFrame:
+        """
+        Converts a DataFrame to a DataFrame with Units.
+
+        Parameters
+        ----------
+        dataFrame : pandas.DataFrame
+            The DataFrame to convert.
+        units : list
+            A list of the units.  There must be one entry in the list for every column.  The units must be
+            valid Pint units.
+        unitsTypes : list
+            A list of the units types.  There must be one entry in the list for every column.  The type mus be
+            registered in the "Units.xlsx" file.
+
+        Returns
+        -------
+        dataFrame : pandas.DataFrame
+            The converted DataFrame.
+        """
+        dataFrame.columns = pd.MultiIndex.from_tuples(list(zip(dataFrame.columns, units)))
+        dataFrame         = dataFrame.pint.quantify(level=-1)
 
         for column, unitType in zip(dataFrame, unitsTypes):
             dataFrame[column].attrs["unitstype"] = unitType
@@ -306,23 +328,73 @@ class Units():
 
     @classmethod
     def ToCsv(cls, dataFrame:pd.DataFrame, path:str, **kwargs):
-        unitsForHeaderInsert = []
+        """
+        Write the data, along with the units information to a CSV file.
+
+        Parameters
+        ----------
+        dataFrame : pd.DataFrame
+            The DataFrame to write.
+        path : str
+            The path to write the file to.
+        **kwargs : kwargs
+            Key word arguments passed to "to_csv".
+
+        Returns
+        -------
+        None.
+        """
+        # Extract the units and units types from the data structures.  Need to get the attributes before dequantifiying.
+        # The dequantifying process seems to strip the attributes.
         typesForHeaderInsert = []
+
         for column in dataFrame:
-            unitsForHeaderInsert.append(dataFrame[column].values.quantity.units)
             typesForHeaderInsert.append(dataFrame[column].attrs["unitstype"])
-        dataFrame.columns = pd.MultiIndex.from_tuples(list(zip(dataFrame.columns, unitsForHeaderInsert, typesForHeaderInsert)))
-        dataFrame.to_csv(path, **kwargs)
+
+        # Specify the output format as "compact" which uses full words wihtout spaces and no special formatting.
+        # Avoiding abbreviations prevents confusion such as "g" for "gravity" or "gram".
+        # No spaces keeps it shorter for output.
+        # Removing special formation prevents using superscripts and uses "**2" instead.  The superscripts don't play well in CSV files.
+        storeFormat = cls.ureg.default_format
+        cls.ureg.default_format = "C"
+        dataFrameForWriting = dataFrame.pint.dequantify()
+        cls.ureg.default_format = storeFormat
+
+        # Add the units types a new headers.
+        mainHeaders  = dataFrameForWriting.columns.get_level_values(0)
+        unitsHeaders = dataFrameForWriting.columns.get_level_values(1)
+        dataFrameForWriting.columns = pd.MultiIndex.from_tuples(list(zip(mainHeaders, unitsHeaders, typesForHeaderInsert)))
+
+        print("\n\nDataFrame for Writing")
+        print(dataFrameForWriting.head())
+
+        # Write the file.
+        dataFrameForWriting.to_csv(path, index=False, **kwargs)
 
 
     @classmethod
-    def FromCsv(cls, path, **kwargs):
-        dataFrame = pd.read_csv(path, **kwargs)
+    def FromCsv(cls, path:str, **kwargs) -> pd.DataFrame:
+        dataFrame = pd.read_csv(path, header=[0, 1, 2], **kwargs)
+        print("\n\nRead back:")
+        print(dataFrame)
 
-        unitsTypes = dataFrame.columns.get_level_values(1)
-        for column, unitsType in zip(dataFrame, unitsTypes):
-            dataFrame[column].attrs["unitstype"] = unitsType
+        # Extract the units, then remove them from the DataFrame.  They get in the way of the convertion to Pint.
+        unitsTypes = dataFrame.columns.get_level_values(2)
+        dataFrame  = dataFrame.droplevel(2, axis=1)
+        print("\n\nAfter drop:")
+        print(dataFrame)
+
+        print("\n\nUnits Types")
+        print(unitsTypes)
 
         dataFrame = dataFrame.pint.quantify(level=-1)
+        print("\n\nAfter pintifying:")
+        print(dataFrame.head())
+        print("\n\nData Types")
+        print(dataFrame.dtypes)
+
+        # Add the units types after convertion to Pint.  Do it before, and they get lost/dropped.
+        for column, unitsType in zip(dataFrame, unitsTypes):
+            dataFrame[column].attrs["unitstype"] = unitsType
 
         return dataFrame
