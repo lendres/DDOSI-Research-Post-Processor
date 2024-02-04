@@ -15,8 +15,8 @@ import pint_pandas
 
 
 class Units():
-    unitTypes     = None
-    ureg          = None
+    unitsTypes     = None
+    UnitRegistry   = None
 
 
     @classmethod
@@ -42,10 +42,10 @@ class Units():
         if not Path.ContainsDirectory(definitionsfile):
             definitionsfile = os.path.join(Path.GetDirectory(__file__), definitionsfile)
 
-        cls.ureg = UnitRegistry(definitionsfile)
+        cls.UnitRegistry = UnitRegistry(definitionsfile)
 
         # Pint pandas setup.
-        pint_pandas.PintType.ureg = cls.ureg
+        pint_pandas.PintType.ureg = cls.UnitRegistry
         pint_pandas.PintType.ureg.default_format = "P~"
         pint_pandas.PintType.ureg.setup_matplotlib(True)
 
@@ -53,7 +53,7 @@ class Units():
             file = os.path.join(Path.GetDirectory(__file__), file)
 
         # The first column are row labels and we indicate that by using "indoex_col=0".
-        cls.unitTypes = pd.read_excel(file, sheet_name=system, index_col=0)
+        cls.unitsTypes = pd.read_excel(file, sheet_name=system, index_col=0)
 
 
     @classmethod
@@ -119,7 +119,7 @@ class Units():
             IO.consoleHelper.PrintWarning("The series cannot be converted.  It does not contain the units type metadata.  Series: "+series.name)
             return series
 
-        toUnits = cls.unitTypes.loc[series.attrs["unitstype"], "Unit"]
+        toUnits = cls.unitsTypes.loc[series.attrs["unitstype"], "Unit"]
 
         IO.consoleHelper.Print("Units: "+toUnits, ConsoleHelper.VERBOSEDEBUG)
 
@@ -355,18 +355,15 @@ class Units():
         # Avoiding abbreviations prevents confusion such as "g" for "gravity" or "gram".
         # No spaces keeps it shorter for output.
         # Removing special formation prevents using superscripts and uses "**2" instead.  The superscripts don't play well in CSV files.
-        storeFormat = cls.ureg.default_format
-        cls.ureg.default_format = "C"
+        storeFormat = cls.UnitRegistry.default_format
+        cls.UnitRegistry.default_format = "C"
         dataFrameForWriting = dataFrame.pint.dequantify()
-        cls.ureg.default_format = storeFormat
+        cls.UnitRegistry.default_format = storeFormat
 
         # Add the units types a new headers.
         mainHeaders  = dataFrameForWriting.columns.get_level_values(0)
         unitsHeaders = dataFrameForWriting.columns.get_level_values(1)
         dataFrameForWriting.columns = pd.MultiIndex.from_tuples(list(zip(mainHeaders, unitsHeaders, typesForHeaderInsert)))
-
-        print("\n\nDataFrame for Writing")
-        print(dataFrameForWriting.head())
 
         # Write the file.
         dataFrameForWriting.to_csv(path, index=False, **kwargs)
@@ -374,24 +371,30 @@ class Units():
 
     @classmethod
     def FromCsv(cls, path:str, **kwargs) -> pd.DataFrame:
+        """
+        Reads the data from a file and converts it to a DataFrame with associated units information.
+
+        Parameters
+        ----------
+        path : str
+            The path to read the data from.
+        **kwargs : kwargs
+            Key word arguments passed to "read_csv".
+
+        Returns
+        -------
+        dataFrame : TYPE
+            A DataFrame with associated units data types and attributes.
+        """
+        # Read the file.
         dataFrame = pd.read_csv(path, header=[0, 1, 2], **kwargs)
-        print("\n\nRead back:")
-        print(dataFrame)
 
         # Extract the units, then remove them from the DataFrame.  They get in the way of the convertion to Pint.
         unitsTypes = dataFrame.columns.get_level_values(2)
         dataFrame  = dataFrame.droplevel(2, axis=1)
-        print("\n\nAfter drop:")
-        print(dataFrame)
 
-        print("\n\nUnits Types")
-        print(unitsTypes)
-
+        # Convert the data types to units.
         dataFrame = dataFrame.pint.quantify(level=-1)
-        print("\n\nAfter pintifying:")
-        print(dataFrame.head())
-        print("\n\nData Types")
-        print(dataFrame.dtypes)
 
         # Add the units types after convertion to Pint.  Do it before, and they get lost/dropped.
         for column, unitsType in zip(dataFrame, unitsTypes):

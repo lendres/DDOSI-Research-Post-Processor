@@ -21,9 +21,6 @@ class testUnits(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # ureg = UnitRegistry()
-        # ureg.default_format = ".3fP"
-
         pd.set_option("display.max_columns", None)
         pd.set_option("display.precision", 4)
 
@@ -51,10 +48,16 @@ class testUnits(unittest.TestCase):
 
     #@unittest.skip
     def testCreatePlot(self):
+        """
+        Plot the original data.
+        """
         self.CreatePlot(self.dataFrame, "Original")
 
 
     def testCsvReadWrite(self):
+        """
+        Test reading and writing units data.
+        """
         path = os.path.join(os.path.dirname(__file__), "test_file.csv")
         Units.ToCsv(self.dataFrame, path)
 
@@ -62,7 +65,7 @@ class testUnits(unittest.TestCase):
         self.CreatePlot(dataFrame, "After Reading From File")
 
         Units.Initialize("US")
-        self.CreatePlot(dataFrame, "Converted from File")
+        self.CreatePlot(dataFrame, "Converted to US from File")
 
 
     @classmethod
