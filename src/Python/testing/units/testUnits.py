@@ -29,6 +29,11 @@ class testUnits(unittest.TestCase):
         pd.set_option("display.max_columns", None)
         pd.set_option("display.precision", 4)
 
+        cls.xAxisColumn  = "time"
+        cls.yAxisColumns = ["displacement", "velocity", "acceleration"]
+
+        Units.Initialize("European")
+
 
     def setUp(self):
         """
@@ -37,7 +42,7 @@ class testUnits(unittest.TestCase):
         self.dataFrame = FunctionGenerator.GetDisplacementVelocityAccelerationDataFrame()
         print(self.dataFrame.head())
 
-        unitsForHeaderInsert   = ["s", "m/s", "m/s", "m/s^2"]
+        unitsForHeaderInsert   = ["s", "m", "m/s", "m/s^2"]
         self.dataFrame.columns = pd.MultiIndex.from_tuples(list(zip(self.dataFrame.columns, unitsForHeaderInsert)))
         self.dataFrame         = self.dataFrame.pint.quantify(level=-1)
 
@@ -46,8 +51,6 @@ class testUnits(unittest.TestCase):
         for column, unitType in zip(self.dataFrame, unitsTypes):
             self.dataFrame[column].attrs["unitstype"] = unitType
 
-        print("\n\nAfter adding units.")
-        print(self.dataFrame.head())
         print("\n\n")
         print(self.dataFrame.dtypes)
 
@@ -79,21 +82,13 @@ class testUnits(unittest.TestCase):
 
         axes = plt.gca()
 
-        axes.plot(
-            Units.GetSeriesMagnitudes(dataFrame["time"]),
-            Units.GetSeriesMagnitudes(dataFrame["displacement"]),
-            label="Displacement"
-        )
-        axes.plot(
-            Units.GetSeriesMagnitudes(dataFrame["time"]),
-            Units.GetSeriesMagnitudes(dataFrame["velocity"]),
-            label="Velocity"
-        )
-        axes.plot(
-            Units.GetSeriesMagnitudes(dataFrame["time"]),
-            Units.GetSeriesMagnitudes(dataFrame["acceleration"]),
-            label="Acceleration"
-        )
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(dataFrame, cls.xAxisColumn, cls.yAxisColumns)
+        for column in cls.yAxisColumns:
+            axes.plot(
+                convertedData["time"],
+                convertedData[column],
+                label=column.title()
+            )
 
         axes.set(title=title, xlabel="Time", ylabel="Value")
         plt.legend(loc="upper left")
