@@ -255,7 +255,7 @@ class Plots():
         figure = plt.gcf()
         axes   = plt.gca()
 
-        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", column)
+        convertedData, xSuffix, ySuffixes = Units.ConvertOutput(data, "Time", [column])
 
         axes.plot(convertedData["Time"], convertedData[column], label=column, **kwargs)
 
