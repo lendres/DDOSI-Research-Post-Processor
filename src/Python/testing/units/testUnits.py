@@ -36,10 +36,10 @@ class testUnits(unittest.TestCase):
         """
         self.dataFrame = FunctionGenerator.GetDisplacementVelocityAccelerationDataFrame()
 
-        units      = ["s", "m", "m/s", "m/s^2"]
-        unitsTypes = ["time", "length", "velocity", "acceleration"]
+        self.units      = ["s", "m", "m/s", "m/s^2"]
+        self.unitTypes = ["time", "length", "velocity", "acceleration"]
 
-        self.dataFrame = Units.AddUnitsToDataFrame(self.dataFrame, units, unitsTypes)
+        self.dataFrame = Units.AddUnitsToDataFrame(self.dataFrame, self.units, self.unitTypes)
 
         # print("\n\n")
         # print(self.dataFrame.head())
@@ -66,6 +66,90 @@ class testUnits(unittest.TestCase):
 
         Units.Initialize("US")
         self.CreatePlot(dataFrame, "Converted to US from File")
+
+
+    def testGetTypes(self):
+        """
+        Test getting the unit types.
+        """
+        result = Units.GetUnitTypes(self.dataFrame)
+        self.assertListEqual(result, self.unitTypes)
+
+
+    def testAttributes(self):
+        series = pd.Series([1, 2, 3, 4])
+        series.attrs["unittypes"] = "time"
+
+        seriesNew = series + 5
+
+        dataFrame = pd.DataFrame([series, seriesNew]).T
+
+        print("\n\nSeries attributes:")
+        print(series.attrs)
+        print(seriesNew.attrs)
+        print(Units.GetUnitTypes(dataFrame))
+
+        print("\n\nSeries:")
+        print(series)
+        print("")
+        print(seriesNew)
+
+        print("\n\nDataFrame:")
+        print(dataFrame)
+        print(Units.GetUnitTypes(dataFrame))
+
+
+    def testAttrsDataFrame(self):
+        df = pd.DataFrame(dict(column1=[1,2,3,4], column2=[1,2,3,4]))
+        df.attrs['name'] = "hello"
+        print(df)
+        print(df.attrs)
+
+        df1 = df.astype(float)
+        print(df1)
+        print(df1.attrs)
+
+        df2 = df.astype({'column1':float})
+        print(df2)
+        print(df2.attrs)
+
+
+    def testAttrsSeries(self):
+        df = pd.DataFrame(dict(column1=[1,2,3,4], column2=[1,2,3,4]))
+        df["column1"].attrs['name'] = 'hello'
+        print(df)
+        print(df.attrs)
+        print(df["column1"].attrs)
+
+        df1 = df.astype(float)
+        print(df1)
+        print(df1["column1"].attrs)
+
+        df2 = df.astype({'column1':float})
+        print(df2)
+        print(df2["column1"].attrs)
+
+
+    def testPintPandas(self):
+        """
+        Test Pint Pandas features.
+        """
+        addTime = 5 * Units.GetUnitRegistry().second
+        # print("\nTime:", addTime)
+        # print("Time type:", type(addTime))
+        # print("\nSeries type:", type(self.dataFrame["time"]))
+        # print("\nSeries data type:", type(self.dataFrame["time"].dtype))
+        print("\nBefore:")
+        print(Units.GetUnitTypes(self.dataFrame))
+        newTime = self.dataFrame["time"] + addTime
+        print("\nAfter:")
+        print(Units.GetUnitTypes(self.dataFrame))
+        print(Units.GetUnitTypes(newTime))
+
+        print("\nAfter assignment:")
+        self.dataFrame["time"] = newTime
+        print(Units.GetUnitTypes(self.dataFrame))
+        print(Units.GetUnitTypes(newTime))
 
 
     @classmethod

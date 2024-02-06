@@ -15,8 +15,8 @@ import pint_pandas
 
 
 class Units():
-    unitsTypes     = None
-    UnitRegistry   = None
+    unitTypes     = None
+    unitRegistry   = None
 
 
     @classmethod
@@ -42,10 +42,10 @@ class Units():
         if not Path.ContainsDirectory(definitionsfile):
             definitionsfile = os.path.join(Path.GetDirectory(__file__), definitionsfile)
 
-        cls.UnitRegistry = UnitRegistry(definitionsfile)
+        cls.unitRegistry = UnitRegistry(definitionsfile)
 
         # Pint pandas setup.
-        pint_pandas.PintType.ureg = cls.UnitRegistry
+        pint_pandas.PintType.ureg = cls.unitRegistry
         pint_pandas.PintType.ureg.default_format = "P~"
         pint_pandas.PintType.ureg.setup_matplotlib(True)
 
@@ -53,7 +53,20 @@ class Units():
             file = os.path.join(Path.GetDirectory(__file__), file)
 
         # The first column are row labels and we indicate that by using "indoex_col=0".
-        cls.unitsTypes = pd.read_excel(file, sheet_name=system, index_col=0)
+        cls.unitTypes = pd.read_excel(file, sheet_name=system, index_col=0)
+
+
+    @classmethod
+    def GetUnitRegistry(cls):
+        """
+        Gets the Pint UnitRegistry used by the Units.
+
+        Returns
+        -------
+        pint.UnitRegistry
+            The UnitRegistry used by the Units class.
+        """
+        return cls.unitRegistry
 
 
     @classmethod
@@ -115,11 +128,11 @@ class Units():
         if not cls._IsSeriesOfPintDType(series):
             IO.consoleHelper.PrintWarning("The series cannot be converted.  It does not contain Pint data.  Series: "+series.name)
             return series
-        elif not "unitstype" in series.attrs:
+        elif not "unittype" in series.attrs:
             IO.consoleHelper.PrintWarning("The series cannot be converted.  It does not contain the units type metadata.  Series: "+series.name)
             return series
 
-        toUnits = cls.unitsTypes.loc[series.attrs["unitstype"], "Unit"]
+        toUnits = cls.unitTypes.loc[series.attrs["unittype"], "Unit"]
 
         IO.consoleHelper.Print("Units: "+toUnits, ConsoleHelper.VERBOSEDEBUG)
 
@@ -279,6 +292,34 @@ class Units():
 
 
     @classmethod
+    def GetUnitTypes(cls, data:pd.Series|pd.DataFrame) -> str|list:
+        """
+        Gets the unit types associated with a Series or DataFrame.
+
+        Parameters
+        ----------
+        data : pd.Series|pd.DataFrame
+            Pandas object to get the unit type information from.
+
+        Returns
+        -------
+        types : str|list
+            A string or list of strings of the unit types.
+        """
+        types = None
+
+        match data:
+            case pd.Series():
+                types = data.attrs["unittype"] if "unittype" in data.attrs else ""
+
+            case pd.DataFrame():
+                types = []
+                for column in data:
+                    types.append(data[column].attrs["unittype"] if "unittype" in data[column].attrs else "")
+        return types
+
+
+    @classmethod
     def _IsSeriesOfPintDType(cls, series):
         """
         Determines if a pandas.Series contains data that is Pint (Units library) data type.
@@ -297,7 +338,7 @@ class Units():
 
 
     @classmethod
-    def AddUnitsToDataFrame(cls, dataFrame:pd.DataFrame, units:list, unitsTypes:list) -> pd.DataFrame:
+    def AddUnitsToDataFrame(cls, dataFrame:pd.DataFrame, units:list, unitTypes:list) -> pd.DataFrame:
         """
         Converts a DataFrame to a DataFrame with Units.
 
@@ -308,7 +349,7 @@ class Units():
         units : list
             A list of the units.  There must be one entry in the list for every column.  The units must be
             valid Pint units.
-        unitsTypes : list
+        unitTypes : list
             A list of the units types.  There must be one entry in the list for every column.  The type mus be
             registered in the "Units.xlsx" file.
 
@@ -320,8 +361,8 @@ class Units():
         dataFrame.columns = pd.MultiIndex.from_tuples(list(zip(dataFrame.columns, units)))
         dataFrame         = dataFrame.pint.quantify(level=-1)
 
-        for column, unitType in zip(dataFrame, unitsTypes):
-            dataFrame[column].attrs["unitstype"] = unitType
+        for column, unitType in zip(dataFrame, unitTypes):
+            dataFrame[column].attrs["unittype"] = unitType
 
         return dataFrame
 
@@ -349,16 +390,16 @@ class Units():
         typesForHeaderInsert = []
 
         for column in dataFrame:
-            typesForHeaderInsert.append(dataFrame[column].attrs["unitstype"])
+            typesForHeaderInsert.append(dataFrame[column].attrs["unittype"])
 
         # Specify the output format as "compact" which uses full words wihtout spaces and no special formatting.
         # Avoiding abbreviations prevents confusion such as "g" for "gravity" or "gram".
         # No spaces keeps it shorter for output.
         # Removing special formation prevents using superscripts and uses "**2" instead.  The superscripts don't play well in CSV files.
-        storeFormat = cls.UnitRegistry.default_format
-        cls.UnitRegistry.default_format = "C"
+        storeFormat = cls.unitRegistry.default_format
+        cls.unitRegistry.default_format = "C"
         dataFrameForWriting = dataFrame.pint.dequantify()
-        cls.UnitRegistry.default_format = storeFormat
+        cls.unitRegistry.default_format = storeFormat
 
         # Add the units types a new headers.
         mainHeaders  = dataFrameForWriting.columns.get_level_values(0)
@@ -390,14 +431,14 @@ class Units():
         dataFrame = pd.read_csv(path, header=[0, 1, 2], **kwargs)
 
         # Extract the units, then remove them from the DataFrame.  They get in the way of the convertion to Pint.
-        unitsTypes = dataFrame.columns.get_level_values(2)
-        dataFrame  = dataFrame.droplevel(2, axis=1)
+        unitTypes = dataFrame.columns.get_level_values(2)
+        dataFrame = dataFrame.droplevel(2, axis=1)
 
         # Convert the data types to units.
         dataFrame = dataFrame.pint.quantify(level=-1)
 
         # Add the units types after convertion to Pint.  Do it before, and they get lost/dropped.
-        for column, unitsType in zip(dataFrame, unitsTypes):
-            dataFrame[column].attrs["unitstype"] = unitsType
+        for column, unitType in zip(dataFrame, unitTypes):
+            dataFrame[column].attrs["unittype"] = unitType
 
         return dataFrame
