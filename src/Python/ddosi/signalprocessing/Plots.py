@@ -5,6 +5,7 @@ Created on October 4, 2023
 import pandas                                                        as pd
 import numpy                                                         as np
 
+import matplotlib.lines                                              as Lines
 import matplotlib.pyplot                                             as plt
 
 from   scipy.signal                                                  import find_peaks
@@ -108,7 +109,7 @@ class Plots():
 
 
     @classmethod
-    def NewPowerSpectralDensityPlot(cls, data:pd.DataFrame, column:str, samplingFrequency:int, titleSuffix:str=None, labelPeaks:AnnotationHelper|bool=True, **kwargs):
+    def NewPowerSpectralDensityPlot(cls, data:pd.DataFrame, column:str, samplingFrequency:int, titleSuffix:str=None, labelPeaks:AnnotationHelper|bool=True, numberOfAnnotations=6, findPeaksKwargs:dict={}, **kwargs):
         """
         Does the main work of making a power spectral density plot.
 
@@ -141,63 +142,13 @@ class Plots():
 
         AxesHelper.Label(axes, "Power Spectral Density Plot", xLabels="Frequency (Hz)", yLabels="Power Spectral Density (dB/Hz)", titleSuffix=titleSuffix)
 
-        match labelPeaks:
-            case True:
-                # Use default settings by creating a new AnnotationHelper.
-                annotationHelper = AnnotationHelper(formatString="{x:0.0f}")
-                annotationHelper.AddPeakAnnotations(line)
-            case AnnotationHelper():
-                annotationHelper.AddPeakAnnotations(line)
-            case False:
-                pass
-            case _:
-                raise Exception("Invalid 'labelPeaks' argument provided.")
-
-            # # The plotted line on the PSD is different than the returned values.  We need to scale the retuned values by the same
-            # # method as the plotted line was.
-            # plotPxx = 10*np.log10(Pxx)
-            # cls._LabelPeaks(axes, frequencies, plotPxx)
+        cls._LabelPeaks(line, labelPeaks, sortBy="localheight", number=numberOfAnnotations, **findPeaksKwargs)
 
         return figure, axes
 
 
     @classmethod
-    def _LabelPeaks(cls, axes, xValues, yValues):
-        # We find the peaks.
-        # The distance argument is provided to group values that are extremely close together.  I.e., a shallow slow with small local peaks is not of interest.
-        # The height argument is provided only to get the algorithm to return the relative peak prominences.  The relative heights/prominences are used as an 'importance' factor in sorting.
-        # The indices of the peaks are the first firsted value from find_peaks.
-        peakResults  = find_peaks(yValues, distance=4, prominence=0.1)
-
-        # Extract the top values from the results.  The top values are defined as those with the largest local peak height.
-        localHeights = (peakResults[1])["prominences"]
-        peaks        = peakResults[0]
-        largestPeaks = heapq.nlargest(8, zip(localHeights, peaks))
-        largestPeaks = [peakCouple[1] for peakCouple in largestPeaks]
-
-        # X locations.
-        peakXValues = xValues[largestPeaks]
-
-        # Y locations.
-        peakYValues = yValues[largestPeaks]
-
-        for xValue, yValue in zip(peakXValues, peakYValues):
-            # Now we annotate the plot.
-            axes.annotate(
-                "{0:.0f}".format(xValue),                                      # Text to plot.
-                (xValue,                                                       # X location.
-                yValue),                                                       # Y location.
-                size=0.6*PlotHelper.GetScaledAnnotationSize(),                 # Font size.
-                fontweight="bold",                                             # Font weight.
-                xytext=(0, 3),                                                 # Move text up a few points so it doesn't touch the curve.
-                textcoords="offset points",                                    # Specifies that xytext is in points.
-                horizontalalignment="center",                                  # Center text horizontally.
-                verticalalignment="bottom"                                     # Justify to bottom of text.  We annotate above the curve.
-            )
-
-
-    @classmethod
-    def CreateRealFftPlot(cls, data:pd.DataFrame, column:str, samplingFrequency:int, titleSuffix:str=None, labelPeaks:bool=True, **kwargs):
+    def CreateRealFftPlot(cls, data:pd.DataFrame, column:str, samplingFrequency:int, stem=True, limits:list=None, titleSuffix:str=None, labelPeaks:AnnotationHelper|bool=True, numberOfAnnotations=6, findPeaksKwargs:dict={}, **kwargs):
         PlotHelper.Format()
         figure = plt.figure()
         axes   = plt.gca()
@@ -209,15 +160,42 @@ class Plots():
         frequencies = frequencies[0:int(numberOfPoints/2)]
         result      = np.abs(rfft(signal.values))
 
-        plt.stem(frequencies, result[0:-1], markerfmt=" ", basefmt="-b")
+        kwargs       = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
+
+        if stem:
+            # A stem plot doesn't return a standard Line2D object, so we will create one for the labeling.
+            line      = Lines.Line2D(frequencies, result[0:-1])
+            line.axes = axes
+            plt.stem(frequencies, result[0:-1], markerfmt=" ", basefmt="-b")
+        else:
+            line = plt.plot(frequencies, result[0:-1])
 
         AxesHelper.Label(axes, "FFT", xLabels="Frequency (Hz)", yLabels="Amplitude", titleSuffix=titleSuffix)
 
-        if labelPeaks:
-            cls._LabelPeaks(axes, frequencies, result)
+        if limits is not None:
+            AxesHelper.SetXAxisLimits(axes, limits=limits)
+
+
+        cls._LabelPeaks(line, labelPeaks, sortBy="globalheight", number=numberOfAnnotations, **findPeaksKwargs)
 
         plt.show()
+
         return figure
+
+
+    @classmethod
+    def _LabelPeaks(cls, line, labelPeaks, sortBy, **kwargs):
+        match labelPeaks:
+            case True:
+                # Use default settings by creating a new AnnotationHelper.
+                annotationHelper = AnnotationHelper(formatString="{x:0.0f}")
+                annotationHelper.AddPeakAnnotations(line, sortBy=sortBy, **kwargs)
+            case AnnotationHelper():
+                labelPeaks.AddPeakAnnotations(line, sortBy=sortBy, **kwargs)
+            case False:
+                pass
+            case _:
+                raise Exception("Invalid 'labelPeaks' argument provided.")
 
 
     @classmethod
