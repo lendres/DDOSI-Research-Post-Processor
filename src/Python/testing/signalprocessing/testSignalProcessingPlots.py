@@ -12,7 +12,9 @@ from   matplotlib                                                    import mlab
 
 from   lendres.demonstration.FunctionGenerator                       import FunctionGenerator
 from   lendres.plotting.PlotHelper                                   import PlotHelper
+from   lendres.plotting.AnnotationHelper                             import AnnotationHelper
 from   ddosi.signalprocessing.Plots                                  import Plots                                      as SignalProcessingPlots
+from   ddosi.plotting.DesignatedColors                               import DesignatedColors
 
 import unittest
 
@@ -23,7 +25,7 @@ class testSignalProcessingPlots(unittest.TestCase):
     def setUpClass(cls):
         # Solution provided in paper.
         # Columns that are in the input file.  The first two are input to the function, the last three are the known solution.
-        pass
+        DesignatedColors.Initialize()
 
 
     def setUp(self):
@@ -60,6 +62,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         SignalProcessingPlots.CreateSpectrogramPlot(dataFrame, column="y", samplingFrequency=samplingFrequency, maxFequency=90, titleSuffix="Method 1")
 
 
+    # @unittest.skip
     def testSpectrogram2(self):
         """
         Example from:
@@ -86,14 +89,41 @@ class testSignalProcessingPlots(unittest.TestCase):
 
         dataFrame = pd.DataFrame({"x" : time, "y" : y})
 
+        # Plot of function.
         self.CreateSineWavePlot(dataFrame["x"], dataFrame["y"], "Method 2")
+
+        # Spectrogram.
         SignalProcessingPlots.CreateSpectrogramPlot(dataFrame, column="y", samplingFrequency=samplingFrequency, titleSuffix="Method 2")
 
+        # Power spectral density plot.
+        SignalProcessingPlots.NewPowerSpectralDensityPlot(dataFrame, column="y", samplingFrequency=samplingFrequency, titleSuffix="Method 2")
 
         # New.
         self.Plot3dSpectrogram(y, samplingFrequency=samplingFrequency, title="3D Spectrogram")
         plt.show()
 
+
+    @unittest.skip
+    def testPlotRealFft(self):
+        numberOfPoints    = 1000
+        timeLength        = 4
+        samplingFrequency = int(numberOfPoints/timeLength)
+
+        # Sine wave.
+        signal = FunctionGenerator.SineWavesAsDataFrame(magnitude=10, frequency=4, steps=numberOfPoints, timeLength=4)
+        signals = [signal]
+
+        # Two sine waves superimposed.
+        signal = FunctionGenerator.SineWavesAsDataFrame(magnitude=2, frequency=20, steps=numberOfPoints, timeLength=4)
+        signals.append(signals[0] + signal)
+
+        # Sine wave with radom noise added.
+        signal = FunctionGenerator.NoisySineWaveAsDataFrame(magnitude=10, frequency=4, noiseScale=0.1, steps=numberOfPoints, timeLength=4)
+        signals.append(signal)
+
+        for i in range(len(signals)):
+            self.CreateSineWavePlot(signals[i].loc[:, "x"], signals[i].loc[:, "y"], "Test Real FFT "+str(i+1))
+            SignalProcessingPlots.CreateRealFftPlot(signals[i], "y", samplingFrequency, labelPeaks=True)
 
 
     def Plot3dSpectrogram(self, y, samplingFrequency=44100, ax=None, title=None):
@@ -115,7 +145,6 @@ class testSignalProcessingPlots(unittest.TestCase):
 
         PlotHelper.PopSettings()
         return X, Y, Z
-
 
 
     @classmethod
