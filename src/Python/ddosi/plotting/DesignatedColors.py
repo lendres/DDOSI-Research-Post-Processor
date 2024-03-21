@@ -136,7 +136,20 @@ class DesignatedColors():
 
 
     @classmethod
-    def _FillRemainingColors(cls, colors):
+    def _FillRemainingColors(cls, colors:list):
+        """
+        Provides colors for any names that were not found in the list of named colors.  Specificially, it looks
+        for empty strings ('') and replaces them with a color in hexadecimal.
+
+        Parameters
+        ----------
+        colors : list
+            List of strings.
+
+        Returns
+        -------
+        None.
+        """
         for i in range(len(colors)):
             if colors[i] == "":
                 colors[i] = cls._GetNextColor()
@@ -144,8 +157,15 @@ class DesignatedColors():
 
     @classmethod
     def _GetNextColor(cls):
+        """
+        Get a color from the color cycle.  The color returned will be unique (not in the colors already used).
+
+        Returns
+        -------
+        color : str
+            A color as a hexadecimal string.
+        """
         color = PlotHelper.NextColorAsHex()
         while color in cls.usedColors:
             color = PlotHelper.NextColorAsHex()
-            pass
         return color
