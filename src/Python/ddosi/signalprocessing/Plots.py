@@ -160,23 +160,27 @@ class Plots():
         frequencies = frequencies[0:int(numberOfPoints/2)]
         result      = np.abs(rfft(signal.values))
 
-        kwargs       = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
-
         if stem:
             # A stem plot doesn't return a standard Line2D object, so we will create one for the labeling.
             line      = Lines.Line2D(frequencies, result[0:-1])
             line.axes = axes
-            plt.stem(frequencies, result[0:-1], markerfmt=" ", basefmt="-b")
+            colorArg  = DesignatedColors.GetColorsAsKeyWordArguments(column)
+            markerline, stemlines, baseline = plt.stem(frequencies, result[0:-1], colorArg["color"], markerfmt=" ", basefmt="-b", label=column, **kwargs)
+            plt.setp(markerline, "color", colorArg["color"])
+            plt.setp(baseline, "color", colorArg["color"])
         else:
-            line = plt.plot(frequencies, result[0:-1])
+            kwargs    = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
+            line      = plt.plot(frequencies, result[0:-1], label=column, **kwargs)
 
         AxesHelper.Label(axes, "FFT", xLabels="Frequency (Hz)", yLabels="Amplitude", titleSuffix=titleSuffix)
 
         if limits is not None:
             AxesHelper.SetXAxisLimits(axes, limits=limits)
 
-
         cls._LabelPeaks(line, labelPeaks, sortBy="globalheight", number=numberOfAnnotations, **findPeaksKwargs)
+
+        legend = LegendHelper.CreateLegendAtFigureBottom(figure, axes, offset=0.15)
+        LegendHelper.SetLegendLineWidths(legend, 4)
 
         plt.show()
 
