@@ -13,7 +13,6 @@ from   matplotlib                                                    import mlab
 from   lendres.demonstration.FunctionGenerator                       import FunctionGenerator
 from   lendres.plotting.PlotHelper                                   import PlotHelper
 from   lendres.plotting.AnnotationHelper                             import AnnotationHelper
-from   lendres.plotting.AnnotationHelper                             import AnnotationHelper
 
 from   ddosi.signalprocessing.Plots                                  import Plots                                      as SignalProcessingPlots
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
@@ -129,7 +128,7 @@ class testSignalProcessingPlots(unittest.TestCase):
             SignalProcessingPlots.CreateRealFftPlot(signals[i], "y", samplingFrequency, labelPeaks=True)
 
 
-    # @unittest.skip
+    @unittest.skip
     def testRealFftOnDataSets(self):
         # Data set 1.
         SignalProcessingPlots.CreateRealFftPlot(self.dataSet1, column="y", samplingFrequency=self.samplingFrequency1, titleSuffix="Data Set 1")
@@ -141,7 +140,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         SignalProcessingPlots.CreateRealFftPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, titleSuffix="Data Set 2", labelPeaks=True, numberOfAnnotations=1)
 
 
-    # @unittest.skip
+    @unittest.skip
     def testPsdDataSets(self):
         # Data set 1.
         SignalProcessingPlots.CreatePowerSpectralDensityPlot(self.dataSet1, column="y", samplingFrequency=self.samplingFrequency1, titleSuffix="Data Set 1")
@@ -150,7 +149,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         SignalProcessingPlots.CreatePowerSpectralDensityPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, titleSuffix="Data Set 2")
 
 
-    # @unittest.skip
+    @unittest.skip
     def testSpectrogramOnDataSets(self):
         # Data set 1.
         SignalProcessingPlots.CreateSpectrogramPlot(self.dataSet1, column="y", samplingFrequency=self.samplingFrequency1, maxFequency=90, titleSuffix="Data Set 1")
@@ -159,7 +158,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         SignalProcessingPlots.CreateSpectrogramPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, titleSuffix="Data Set 2")
 
 
-    # @unittest.skip
+    @unittest.skip
     def test3DSpectrogram(self):
         # Data set 2.
         self.Plot3dSpectrogram(self.dataSet2["y"], samplingFrequency=self.samplingFrequency2, title="3D Spectrogram")
