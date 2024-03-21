@@ -43,19 +43,64 @@ class DesignatedColors():
 
 
     @classmethod
-    def GetColorsAsKeyWordArguments(cls, names:str|list|tuple):
+    def GetColorsAsKeyWordArguments(cls, names:str|list|tuple) -> dict:
+        """
+        Takes a list/tuple (or list of lists) of named values and converts them to a keyword arguments that contains a list of colors.
+
+        If any of the names are not found in the color map, a default color will be supplied.  The default colors are generated fromthe PlotHelper
+        color cyle.
+
+        Color map lookups are done on a closest match basis.
+            Example:
+                If name="Category A Sub 1 SubSub I"
+                And the look up map had categories:
+                    "Category A"
+                    "Category A Sub 1"
+                The name would match "Category A Sub 1" because "Category A Sub 1" is the longest string that matches the start of name.
+
+        Parameters
+        ----------
+        names : str|list|tuple
+            A list/tuple of named values.  The lists/tuples can be nested.
+            Examples:
+                ["Category A", "Category B", "Category C"]
+                ["Category A", ["Category B", "Category C"]]
+
+        Returns
+        -------
+        : dict
+            A dictionary of the form {"color" : LIST} where LIST is a list of colors.  The list is a flat list (no nested lists).
+        """
         return {"color" : cls.GetColors(names)}
 
 
     @classmethod
-    def ApplyKeyWordArgumentsToColors(cls, kwargs, names:str|list|tuple):
+    def ApplyKeyWordArgumentsToColors(cls, kwargs:dict, names:str|list|tuple) -> dict:
+        """
+        Applies the named colors to the keyword arguments.  This will overwrite an existing "color" dictionary entry, if it exists.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Keyword arguments as a dictionary.
+        names : str|list|tuple
+            A list/tuple of named values.  The lists/tuples can be nested.
+            Examples:
+                ["Category A", "Category B", "Category C"]
+                ["Category A", ["Category B", "Category C"]]
+
+        Returns
+        -------
+        : dict
+            Updated keyword arguments as a dictionary.
+        """
         defaultKwargs = cls.GetColorsAsKeyWordArguments(names)
         defaultKwargs.update(kwargs)
         return defaultKwargs
 
 
     @classmethod
-    def GetColors(cls, names:str|list|tuple):
+    def GetColors(cls, names:str|list|tuple) -> list:
         """
         Takes a list/tuple (or list of lists) of named values and converts them to a list of colors.
 
