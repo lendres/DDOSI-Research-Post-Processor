@@ -3,23 +3,16 @@ Created on October 4, 2023
 @author: Lance A. Endres
 """
 import pandas                                                        as pd
-import numpy                                                         as np
 
 import matplotlib.lines                                              as Lines
 import matplotlib.pyplot                                             as plt
 
-from   scipy.signal                                                  import find_peaks
-from   scipy.fft                                                     import rfft
-from   scipy.fft                                                     import rfftfreq
-
-import heapq
-
 from   lendres.plotting.AxesHelper                                   import AxesHelper
 from   lendres.plotting.PlotHelper                                   import PlotHelper
 from   lendres.plotting.LegendHelper                                 import LegendHelper
-from   lendres.plotting.LegendOptions                                import LegendOptions
 from   lendres.plotting.AnnotationHelper                             import AnnotationHelper
 
+from   ddosi.signalprocessing.SignalProcessing                       import SignalProcessing
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
 
 
@@ -132,6 +125,8 @@ class Plots():
         -------
         figure : matplotlib.figure.Figure
             The newly created figure.
+        axes : matplotlib.axes.Axes
+            The axes plotted on.
         """
         PlotHelper.Format()
         figure = plt.gcf()
@@ -139,6 +134,7 @@ class Plots():
 
         kwargs                 = DesignatedColors.ApplyKeyWordArgumentsToColors(kwargs, column)
         Pxx, frequencies, line = plt.psd(data[column], Fs=samplingFrequency, label=column, return_line=True, **kwargs)
+        # To convert the returned values to the values plotted, use: plotPxx = 10*np.log10(Pxx)
 
         AxesHelper.Label(axes, "Power Spectral Density Plot", xLabels="Frequency (Hz)", yLabels="Power Spectral Density (dB/Hz)", titleSuffix=titleSuffix)
 
@@ -153,12 +149,7 @@ class Plots():
         figure = plt.figure()
         axes   = plt.gca()
 
-        signal         = data[column]
-        numberOfPoints = len(signal)
-
-        frequencies = rfftfreq(numberOfPoints, d=1.0/samplingFrequency)
-        frequencies = frequencies[0:int(numberOfPoints/2)]
-        result      = np.abs(rfft(signal.values))
+        frequencies, result = SignalProcessing.RealFFT(data[column], samplingFrequency);
 
         if stem:
             # A stem plot doesn't return a standard Line2D object, so we will create one for the labeling.

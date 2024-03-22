@@ -2,123 +2,110 @@
 Created on March 15, 2023
 @author: Lance A. Endres
 """
-from   ddosi.signalprocessing.ButterworthLowPass                     import ButterworthLowPassFilter
+import pandas                                                        as pd
+import numpy                                                         as np
+
+import scipy.fft
+
+from   scipy.signal                                                  import find_peaks
+import heapq
+
 
 class SignalProcessing():
     """
-    A static class for applying signal processing algorithms to data.
+    A static class for applying signal processing algorithms.
     """
 
     @classmethod
-    def MovingAverage(cls, data, columns, numberOfPoints):
+    def MovingAverage(cls, signal:pd.Series|list|tuple|np.ndarray, numberOfPoints:int) -> pd.Series:
         """
         Creates moving averages for each column specified in "columns".  The moving averae is added to the DataFrame as a new
         column.  The new column name is the original column name with a suffix added that indicates the number of points used.
 
         Parameters
         ----------
-        data : pandas.DataFrame
-            Data in a pandas.DataFrame
-        columns : array like of strings
+        signal : array like of floats
             The column names in a list.
         numberOfPoints : int
             The number of points to use for the moving average.
 
         Returns
         -------
-        newNames : list of strings
-            A list of the new column names.
-        suffix : str
-            The suffix added to the column names.
+        movingAverage : pandas.Series
+            Moving averages.
         """
-        newNames = []
-        suffix   = str(numberOfPoints) + " pt Moving Average"
+        if not isinstance(signal, pd.core.series.Series):
+            signal = pd.Series(signal)
 
-        for column in columns:
-            movingAverage    = data[column].rolling(numberOfPoints).mean()
+        movingAverage = signal.rolling(numberOfPoints).mean()
 
-            # The front of the series gets filled with NaN until "numberOfPoints" entry is reached (that many points are needed
-            # to start the moving avaerage calculation).  Because, NaNs cause a lot of problems in calculations/plotting/et cetera,
-            # the NaNs are replaced with the first valid value.
-            movingAverage.fillna(movingAverage[numberOfPoints], inplace=True)
+        # The front of the series gets filled with NaN until "numberOfPoints" entry is reached (that many points are needed
+        # to start the moving avaerage calculation).  Because, NaNs cause a lot of problems in calculations/plotting/et cetera,
+        # the NaNs are replaced with the first valid value.
+        movingAverage.fillna(movingAverage[numberOfPoints], inplace=True)
 
-            columnName       = column + " " + suffix
-            data[columnName] = movingAverage
-            newNames.append(columnName)
-        return newNames, suffix
+        return movingAverage
 
 
     @classmethod
-    def RootMeanSquare(cls, data, columns, numberOfPoints):
+    def RootMeanSquare(cls, signal:pd.Series|list|tuple|np.ndarray, numberOfPoints:int) -> pd.Series:
         """
         Creates a root mean square for each column specified in "columns".  The root mean square is added to the DataFrame as a new
         column.  The new column name is the original column name with a suffix added that indicates the number of points used.
 
         Parameters
         ----------
-        data : pandas.DataFrame
-            Data in a pandas.DataFrame
-        columns : array like of strings
+        signal : array like of floats
             The column names in a list.
         numberOfPoints : int
             The number of points to use for the moving average.
 
         Returns
         -------
-        newNames : list of strings
-            A list of the new column names.
-        suffix : str
-            The suffix added to the column names.
+        rootMeanSquare : pandas.Series
+            Root mean squares.
         """
-        newNames = []
-        suffix   = str(numberOfPoints) + " pt RMS"
+        if not isinstance(signal, pd.core.series.Series):
+            signal = pd.Series(signal)
 
-        for column in columns:
-            rootMeanSquare  = data[column].pow(2).rolling(numberOfPoints).mean().pow(0.5)
+        rootMeanSquare  = signal.pow(2).rolling(numberOfPoints).mean().pow(0.5)
 
-            # The front of the series gets filled with NaN until "numberOfPoints" entry is reached (that many points are needed
-            # to start the moving avaerage calculation).  Because, NaNs cause a lot of problems in calculations/plotting/et cetera,
-            # the NaNs are replaced with the first valid value.
-            rootMeanSquare.fillna(rootMeanSquare[numberOfPoints], inplace=True)
+        # The front of the series gets filled with NaN until "numberOfPoints" entry is reached (that many points are needed
+        # to start the moving avaerage calculation).  Because, NaNs cause a lot of problems in calculations/plotting/et cetera,
+        # the NaNs are replaced with the first valid value.
+        rootMeanSquare.fillna(rootMeanSquare[numberOfPoints], inplace=True)
 
-            columnName       = column + " " + suffix
-            data[columnName] = rootMeanSquare
-            newNames.append(columnName)
-        return newNames, suffix
+        return rootMeanSquare
 
 
     @classmethod
-    def LowPassFilter(cls, data, columns, cutOff, samplingFrequency, order=2):
+    def RealFFT(cls, signal:pd.Series|list|tuple|np.ndarray, samplingFrequency:int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
         """
-        Creeates low pass output for each column specified in "columns".  The low pass data is added to the DataFrame as a new
-        column.  The new column name is the original column name with a suffix added that indicates the cut off frequency.
+        Performs an FFT on real data and returns the frequencies and FFT values.
 
         Parameters
         ----------
-        data : pandas.DataFrame
-            Data in a pandas.DataFrame
-        columns : array like of strings
-            The column names in a list.
-        cutOff : float
-            The cut off frequency used in the filter.
-        samplingFrequency : float
-            The sampling frequency of the source data.
-        order : int, optional
-            Order of the filter used.. The default is 2.
+        signal : pd.Series|list|tuple|np.array
+            Signal to calculate the FFT for.
+        samplingFrequency : int
+            Samplling frequency/rate.
+        kwargs : keyword arguments
+            Keyword arguments passed to the FFT function.
 
         Returns
         -------
-        newNames : list of strings
-            A list of the new column names.
-        suffix : str
-            The suffix added to the column names.
+        frequencies : np.array
+            The frequencies associated with each FFT value.
+        fft : np.array
+            The FFT values.
         """
-        newNames = []
-        suffix   = str(cutOff) + " Hz Lowpass Filtered"
+        if isinstance(signal, pd.core.series.Series):
+            signal = signal.values
 
-        for column in columns:
-            filteredData, b, a = ButterworthLowPassFilter(data[column], cutOff, samplingFrequency, order)
-            columnName         = column + " " + suffix
-            data[columnName]   = filteredData
-            newNames.append(columnName)
-        return newNames, suffix
+        numberOfPoints = len(signal)
+
+        frequencies = scipy.fft.rfftfreq(numberOfPoints, d=1.0/samplingFrequency)
+        frequencies = frequencies[0:int(numberOfPoints/2)]
+        fft         = np.abs(scipy.fft.rfft(signal, **kwargs))
+
+        return frequencies, fft
