@@ -7,9 +7,8 @@ import numpy                                                         as np
 
 import scipy.fft
 
-from   scipy.signal                                                  import find_peaks
-import heapq
 
+import matplotlib.mlab as mlab
 
 class SignalProcessing():
     """
@@ -76,6 +75,18 @@ class SignalProcessing():
         rootMeanSquare.fillna(rootMeanSquare[numberOfPoints], inplace=True)
 
         return rootMeanSquare
+
+
+    @classmethod
+    def PowerSpectralDensity(cls, signal:pd.Series|list|tuple|np.ndarray, samplingFrequency:int, **kwargs) -> tuple[np.ndarray, np.ndarray]:
+        # This method will also work, but it will return the signal as positive and not the
+        # from scipy import signal as SciPySignal
+        # frequencies, psd = SciPySignal.welch(signal, axis=0)
+
+        psd, frequencies = mlab.psd(signal, Fs=samplingFrequency)
+        psd = 10*np.log10(psd)
+
+        return frequencies, psd
 
 
     @classmethod
