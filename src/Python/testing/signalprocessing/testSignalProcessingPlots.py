@@ -2,9 +2,6 @@
 Created on February 17, 2023
 @author: Lance A. Endres
 """
-
-from   scipy.signal                                                  import freqz
-
 import numpy                                                         as np
 import pandas                                                        as pd
 import matplotlib.pyplot                                             as plt
@@ -16,6 +13,7 @@ from   lendres.plotting.AnnotationHelper                             import Anno
 
 from   ddosi.signalprocessing.Plots                                  import Plots                                      as SignalProcessingPlots
 from   ddosi.plotting.DesignatedColors                               import DesignatedColors
+from   testing.signalprocessing.TestDataSets                         import TestDataSets
 
 import unittest
 
@@ -29,73 +27,7 @@ class testSignalProcessingPlots(unittest.TestCase):
         cls.annotationHelper = AnnotationHelper(formatString="{x:0.1f}")
         cls.annotationHelper.SetAdjustText(True, arrowstyle="-")
 
-        cls.dataSet1, cls.samplingFrequency1 = cls.CreateDataSet1()
-        cls.dataSet2, cls.samplingFrequency2 = cls.CreateDataSet2()
-
-
-    @classmethod
-    def CreateDataSet1(cls):
-        startTime          = 0
-        timeLength         = 10
-        samplingFrequency  = 1024
-        frequency          = 60
-        magnitude          = 10
-        limit              = magnitude+1
-        secondaryFrequency = 10
-        steps              = timeLength*samplingFrequency
-
-
-        dataFrame = FunctionGenerator.NoisySineWaveAsDataFrame(noiseScale=0.1, magnitude=magnitude, frequency=frequency, startTime=startTime, timeLength=timeLength, steps=steps)
-
-        limit              = 11
-        zoomedSamples      = 512
-
-        cls.CreateSineWavePlot(dataFrame["x"].iloc[:zoomedSamples], dataFrame["y original"].iloc[:zoomedSamples], "Data Set 1 - "+str(frequency)+" Hz Sine Wave", limit=limit)
-        cls.CreateSineWavePlot(dataFrame["x"].iloc[:zoomedSamples], dataFrame["noise"].iloc[:zoomedSamples], "Data Set 1 - Noise", limit=limit)
-
-        x, y = FunctionGenerator.SineWave(magnitude=2, frequency=secondaryFrequency, startTime=startTime, timeLength=timeLength, steps=steps)
-
-        dataFrame["y"] = dataFrame["y"] + y
-
-        cls.CreateSineWavePlot(x[:zoomedSamples], y[:zoomedSamples], "Data Set 1 - "+str(secondaryFrequency)+" Hz Sine Wave", limit=limit)
-        # cls.CreateSineWavePlot(dataFrame["x"], dataFrame["y"], "Data Set 1 - Combined Signal", limit=limit)
-        cls.CreateSineWavePlot(dataFrame["x"].iloc[:zoomedSamples], dataFrame["y"].iloc[:zoomedSamples], "Data Set 1 - Zoomed Combined Signal")
-
-        return dataFrame, samplingFrequency
-
-
-    @classmethod
-    def CreateDataSet2(cls):
-        """
-        Example from:
-            https://analyticsindiamag.com/hands-on-tutorial-on-visualizing-spectrograms-in-python/
-        """
-        # NFFT = 1024
-        samplingFrequency   = 10e3
-        numberOfPoints      = 1e5
-
-        time                =  np.arange(numberOfPoints) / float(samplingFrequency)
-
-        # The low frequency signal with a period of 4 seconds (prevents having a dominate signal at 0 Hz).
-        lowFrequencySignal  = 500*np.cos(2*np.pi*0.25*time)
-
-        amplitude           =  2 * np.sqrt(2)
-        carrier             =  amplitude * np.sin(2*np.pi*3e3*time + lowFrequencySignal)
-        carrier             =  amplitude * carrier
-
-        np.random.seed(0)
-        noisePower          =  0.01 * samplingFrequency / 2
-        noise               =  np.random.normal(scale=np.sqrt(noisePower), size=time.shape)
-        noise               *= np.exp(-time/5)
-
-        y                   =  carrier + noise
-
-        dataFrame           = pd.DataFrame({"x" : time, "y" : y})
-
-        # Plot of function.
-        cls.CreateSineWavePlot(dataFrame["x"], dataFrame["y"], "Data Set 2")
-
-        return dataFrame, samplingFrequency
+        cls.dataSets = TestDataSets.GetDataSets()
 
 
     def setUp(self):
@@ -107,65 +39,39 @@ class testSignalProcessingPlots(unittest.TestCase):
 
     # @unittest.skip
     def testPlotRealFft(self):
-        numberOfPoints    = 1000
-        timeLength        = 4
-        samplingFrequency = int(numberOfPoints/timeLength)
+        numberOfAnnotations = [1, 2, 1, 2, 1]
+        for i in range(len(self.dataSets)):
+            dataSet = self.dataSets[i]
+            SignalProcessingPlots.CreateRealFftPlot(dataSet, "y", dataSet.samplingFrequency, titleSuffix=dataSet.name, labelPeaks=True, numberOfAnnotations=numberOfAnnotations[i])
 
-        # Sine wave.
-        signal = FunctionGenerator.SineWavesAsDataFrame(magnitude=10, frequency=4, steps=numberOfPoints, timeLength=4)
-        signals = [signal]
-
-        # Two sine waves superimposed.
-        signal = FunctionGenerator.SineWavesAsDataFrame(magnitude=2, frequency=20, steps=numberOfPoints, timeLength=4)
-        signals.append(signals[0] + signal)
-
-        # Sine wave with radom noise added.
-        signal = FunctionGenerator.NoisySineWaveAsDataFrame(magnitude=10, frequency=4, noiseScale=0.1, steps=numberOfPoints, timeLength=4)
-        signals.append(signal)
-
-        for i in range(len(signals)):
-            self.CreateSineWavePlot(signals[i].loc[:, "x"], signals[i].loc[:, "y"], "Test Real FFT "+str(i+1))
-            SignalProcessingPlots.CreateRealFftPlot(signals[i], "y", samplingFrequency, labelPeaks=True)
+            if i == 4:
+                SignalProcessingPlots.CreateRealFftPlot(dataSet, column="y", samplingFrequency=dataSet.samplingFrequency, limits=[2872, 2886], titleSuffix=dataSet.name, labelPeaks=self.annotationHelper)
+                SignalProcessingPlots.CreateRealFftPlot(dataSet, column="y", samplingFrequency=dataSet.samplingFrequency, stem=False, limits=[2872, 2886], titleSuffix=dataSet.name, labelPeaks=self.annotationHelper)
 
 
-    @unittest.skip
-    def testRealFftOnDataSets(self):
-        # Data set 1.
-        SignalProcessingPlots.CreateRealFftPlot(self.dataSet1, column="y", samplingFrequency=self.samplingFrequency1, titleSuffix="Data Set 1")
-
-        # Data set 2.
-        SignalProcessingPlots.CreateRealFftPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, limits=[2872, 2886], titleSuffix="Data Set 2", labelPeaks=self.annotationHelper)
-        SignalProcessingPlots.CreateRealFftPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, stem=False, limits=[2872, 2886], titleSuffix="Data Set 2", labelPeaks=self.annotationHelper)
-
-        SignalProcessingPlots.CreateRealFftPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, titleSuffix="Data Set 2", labelPeaks=True, numberOfAnnotations=1)
-
-
-    @unittest.skip
+    # @unittest.skip
     def testPsdDataSets(self):
-        # Data set 1.
-        SignalProcessingPlots.CreatePowerSpectralDensityPlot(self.dataSet1, column="y", samplingFrequency=self.samplingFrequency1, titleSuffix="Data Set 1")
-
-        # Data set 2.
-        SignalProcessingPlots.CreatePowerSpectralDensityPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, titleSuffix="Data Set 2")
+        for i in range(len(self.dataSets)):
+            dataSet = self.dataSets[i]
+            SignalProcessingPlots.CreatePowerSpectralDensityPlot(dataSet, column="y", samplingFrequency=dataSet.samplingFrequency, titleSuffix=dataSet.name)
 
 
-    @unittest.skip
+    # @unittest.skip
     def testSpectrogramOnDataSets(self):
-        # Data set 1.
-        SignalProcessingPlots.CreateSpectrogramPlot(self.dataSet1, column="y", samplingFrequency=self.samplingFrequency1, maxFequency=90, titleSuffix="Data Set 1")
+        maxFequencies = [None, None, None, 90, None]
+        for i in [3, 4]:
+            dataSet = self.dataSets[i]
+            SignalProcessingPlots.CreateSpectrogramPlot(dataSet, column="y", samplingFrequency=dataSet.samplingFrequency, maxFequency=maxFequencies[i], titleSuffix=dataSet.name)
 
-        # Data set 2.
-        SignalProcessingPlots.CreateSpectrogramPlot(self.dataSet2, column="y", samplingFrequency=self.samplingFrequency2, titleSuffix="Data Set 2")
 
-
-    @unittest.skip
+    # @unittest.skip
     def test3DSpectrogram(self):
-        # Data set 2.
-        self.Plot3dSpectrogram(self.dataSet2["y"], samplingFrequency=self.samplingFrequency2, title="3D Spectrogram")
+        dataSet = self.dataSets[4]
+        self.Plot3dSpectrogram(dataSet["y"], samplingFrequency=dataSet.samplingFrequency, title="3D Spectrogram")
         plt.show()
 
 
-    @classmethod
+    # @classmethod
     def Plot3dSpectrogram(cls, y, samplingFrequency=44100, ax=None, title=None):
         PlotHelper.PushSettings(scale=0.5)
         PlotHelper.Format()
